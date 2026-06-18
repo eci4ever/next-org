@@ -68,7 +68,7 @@ const data = {
 export function AppSidebar({
   session,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { session: { user: { id: string; name: string; email: string; image?: string | null } } }) {
+}: React.ComponentProps<typeof Sidebar> & { session: { user: { id: string; name: string; email: string; image?: string | null; role?: string | null } } }) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -88,19 +88,21 @@ export function AppSidebar({
             ))}
           </SidebarMenu>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
-          <SidebarMenu>
-            {data.platform.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton render={<Link href={item.url} />} tooltip={item.title}>
-                  {item.icon}
-                  <span>{item.title}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+        {session.user.role === "admin" && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarMenu>
+              {data.platform.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton render={<Link href={item.url} />} tooltip={item.title}>
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={session.user} />
