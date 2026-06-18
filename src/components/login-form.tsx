@@ -1,7 +1,9 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,7 +26,16 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const router = useRouter()
   const [state, formAction, pending] = useActionState(signIn, undefined)
+
+  useEffect(() => {
+    if (state?.error) toast.error(state.error)
+    if (state?.success) {
+      toast.success("Signed in successfully.")
+      router.push("/dashboard")
+    }
+  }, [state])
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -38,11 +49,6 @@ export function LoginForm({
         <CardContent>
           <form action={formAction}>
             <FieldGroup>
-              {state?.error && (
-                <Field>
-                  <p className="text-sm text-destructive">{state.error}</p>
-                </Field>
-              )}
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
