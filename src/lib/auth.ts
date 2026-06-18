@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "@better-auth/drizzle-adapter"
 import { nextCookies } from "better-auth/next-js"
+import { admin, organization } from "better-auth/plugins"
 import { db } from "@/db"
 import * as schema from "@/db/schema"
 
@@ -12,5 +13,11 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  plugins: [nextCookies()],
+  plugins: [
+    admin(),
+    organization({
+      teams: { enabled: true },
+    }),
+    nextCookies(),
+  ],
 })
