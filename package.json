@@ -17,6 +17,7 @@
     "@base-ui/react": "^1.5.0",
     "@better-auth/drizzle-adapter": "^1.6.19",
     "@neondatabase/serverless": "^1.1.0",
+    "@tanstack/react-table": "^8.21.3",
     "better-auth": "^1.6.19",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
