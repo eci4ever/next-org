@@ -38,7 +38,7 @@ export default async function ProtectedLayout({
             <Badge
               variant={session.user.role === "admin" ? "default" : "secondary"}
             >
-              {session.user.role ?? "user"}
+              {session.user.role === "admin" ? "Admin" : "User"}
             </Badge>
           </div>
         </header>

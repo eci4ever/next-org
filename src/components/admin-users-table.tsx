@@ -1,14 +1,15 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   type ColumnDef,
   type ColumnFiltersState,
-  type SortingState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -16,7 +17,6 @@ import {
   ArrowUpDownIcon,
   ArrowUpIcon,
   BanIcon,
-  Columns3Icon,
   MoreHorizontalIcon,
   PlusIcon,
   RotateCcwIcon,
@@ -29,8 +29,7 @@ import {
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -56,7 +55,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -75,14 +74,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -118,7 +110,6 @@ export type AdminUserRow = {
 
 type AdminUsersTableProps = {
   users: AdminUserRow[];
-  total: number;
   currentUserId: string;
 };
 
@@ -147,16 +138,31 @@ const globalFilterFn = (
   );
 };
 
-function formatDate(value: string | null) {
-  if (!value) return "Unknown";
-  const d = new Date(value);
-  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-}
-
 function formatDateTime(value: string | null) {
   if (!value) return "Unknown";
   const d = new Date(value);
-  return `${formatDate(value)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const month = months[d.getMonth()];
+  const day = d.getDate();
+  const year = d.getFullYear();
+  const hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const h12 = hours % 12 || 12;
+  return `${month} ${day}, ${year}, ${h12}:${minutes} ${ampm}`;
 }
 
 function getInitials(name: string, email: string) {
@@ -206,7 +212,6 @@ const SortHeader = React.memo(function SortHeader({
 
 export function AdminUsersTable({
   users,
-  total,
   currentUserId,
 }: AdminUsersTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
@@ -216,6 +221,7 @@ export function AdminUsersTable({
   const [sorting, setSorting] = useState<SortingState>([
     { id: "createdAt", desc: true },
   ]);
+  const [rowSelection, setRowSelection] = useState({});
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
@@ -230,25 +236,49 @@ export function AdminUsersTable({
   const columns = useMemo<ColumnDef<AdminUserRow>[]>(
     () => [
       {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            indeterminate={
+              table.getIsSomePageRowsSelected() &&
+              !table.getIsAllPageRowsSelected()
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
         accessorKey: "name",
         header: ({ column }) => <SortHeader column={column} label="User" />,
         cell: ({ row }) => {
           const user = row.original;
-
           return (
-            <div className="flex min-w-56 items-center gap-3">
-              <Avatar className="size-9">
+            <div className="flex items-center gap-3">
+              <Avatar className="size-8">
                 <AvatarImage src={user.image ?? ""} alt={user.name} />
-                <AvatarFallback>
+                <AvatarFallback className="text-xs">
                   {getInitials(user.name, user.email)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-col">
-                <span className="truncate font-medium">
+                <span className="truncate text-sm font-medium">
                   {user.name || "Unnamed user"}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {user.id}
+                  {user.email}
                 </span>
               </div>
             </div>
@@ -256,21 +286,13 @@ export function AdminUsersTable({
         },
       },
       {
-        accessorKey: "email",
-        header: ({ column }) => <SortHeader column={column} label="Email" />,
-        cell: ({ row }) => (
-          <span className="block max-w-64 truncate">{row.original.email}</span>
-        ),
-      },
-      {
         accessorKey: "role",
         header: "Role",
         cell: ({ row }) => {
           const role = roleValue(row.original.role);
-
           return (
             <Badge variant={role === "admin" ? "default" : "secondary"}>
-              {role}
+              {role === "admin" ? "Admin" : "User"}
             </Badge>
           );
         },
@@ -287,12 +309,13 @@ export function AdminUsersTable({
       },
       {
         accessorKey: "createdAt",
-        header: ({ column }) => <SortHeader column={column} label="Created" />,
-        cell: ({ row }) => formatDate(row.original.createdAt),
+        header: ({ column }) => <SortHeader column={column} label="Joined" />,
+        cell: ({ row }) => formatDateTime(row.original.createdAt),
       },
       {
         id: "actions",
         enableSorting: false,
+        enableHiding: false,
         cell: ({ row }) => (
           <UserActions user={row.original} currentUserId={currentUserId} />
         ),
@@ -309,263 +332,238 @@ export function AdminUsersTable({
       globalFilter,
       columnFilters,
       columnVisibility,
+      rowSelection,
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
     globalFilterFn,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    enableRowSelection: true,
     initialState: { pagination: { pageSize: 10 } },
   });
 
+  const pageSize = table.getState().pagination.pageSize;
+
   return (
-    <Card>
-      <CardHeader className="flex flex-col gap-4 border-b">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="relative flex-1 md:max-w-md">
-            <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by name or email..."
-              className="pl-9"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              value={
-                (columnFilters.find((f) => f.id === "role")?.value as string) ??
-                "all"
-              }
-              onValueChange={(value) =>
-                typeof value === "string" &&
-                setColumnFilters((prev) => {
-                  const rest = prev.filter(
-                    (f) => f.id !== "role" && f.id !== "banned",
-                  );
-                  if (value === "all")
-                    return [...rest, { id: "banned", value: false }];
-                  return [...rest, { id: "role", value }];
-                })
-              }
-            >
-              <SelectTrigger size="sm" className="w-[120px]">
-                <SelectValue placeholder="All roles" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">All roles</SelectItem>
-                  <SelectItem value="admin">Admins</SelectItem>
-                  <SelectItem value="user">Users</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <Select
-              value={
-                columnFilters.find((f) => f.id === "role")
-                  ? "all"
-                  : ((columnFilters.find((f) => f.id === "banned")
-                      ?.value as string) ?? "all")
-              }
-              onValueChange={(value) =>
-                typeof value === "string" &&
-                setColumnFilters((prev) => {
-                  const rest = prev.filter(
-                    (f) => f.id !== "role" && f.id !== "banned",
-                  );
-                  if (value === "all") return rest;
-                  return [...rest, { id: "banned", value: value === "banned" }];
-                })
-              }
-            >
-              <SelectTrigger size="sm" className="w-[120px]">
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="banned">Banned</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={<Button variant="outline" size="sm" />}
-              >
-                <Columns3Icon data-icon="inline-start" />
-                Columns
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuLabel>Columns</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {table
-                  .getAllColumns()
-                  .filter((c) => c.getCanHide())
-                  .map((column) => (
-                    <DropdownMenuItem
-                      key={column.id}
-                      onClick={() => column.toggleVisibility()}
-                    >
-                      <label className="flex items-center gap-2 capitalize">
-                        <input
-                          type="checkbox"
-                          className="size-4 accent-foreground"
-                          checked={column.getIsVisible()}
-                          readOnly
-                        />
-                        {column.id === "banned" ? "status" : column.id}
-                      </label>
-                    </DropdownMenuItem>
-                  ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {hasActiveFilters ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchInput("");
-                  setGlobalFilter("");
-                  setColumnFilters([]);
-                }}
-              >
-                <RotateCcwIcon data-icon="inline-start" />
-                Reset
-              </Button>
-            ) : null}
-          </div>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="relative flex-1 md:max-w-xs">
+          <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by name or email..."
+            className="h-9 pl-9 text-sm"
+          />
         </div>
-        <p className="text-xs text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} of {total} user
-          {total === 1 ? "" : "s"}
-        </p>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          {users.length ? (
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={
+              (columnFilters.find((f) => f.id === "role")?.value as string) ??
+              "all"
+            }
+            onValueChange={(value) =>
+              typeof value === "string" &&
+              setColumnFilters((prev) => {
+                const rest = prev.filter(
+                  (f) => f.id !== "role" && f.id !== "banned",
+                );
+                if (value === "all")
+                  return [...rest, { id: "banned", value: false }];
+                return [...rest, { id: "role", value }];
+              })
+            }
+          >
+            <SelectTrigger size="sm" className="w-[110px]">
+              <SelectValue placeholder="All roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="admin">Admins</SelectItem>
+                <SelectItem value="user">Users</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <Select
+            value={
+              columnFilters.find((f) => f.id === "role")
+                ? "all"
+                : ((columnFilters.find((f) => f.id === "banned")
+                    ?.value as string) ?? "all")
+            }
+            onValueChange={(value) =>
+              typeof value === "string" &&
+              setColumnFilters((prev) => {
+                const rest = prev.filter(
+                  (f) => f.id !== "role" && f.id !== "banned",
+                );
+                if (value === "all") return rest;
+                return [...rest, { id: "banned", value: value === "banned" }];
+              })
+            }
+          >
+            <SelectTrigger size="sm" className="w-[110px]">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="banned">Banned</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          {hasActiveFilters ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchInput("");
+                setGlobalFilter("");
+                setColumnFilters([]);
+              }}
+            >
+              <RotateCcwIcon data-icon="inline-start" />
+              Reset
+            </Button>
+          ) : null}
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
                         )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+                  </TableHead>
                 ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <UserRoundIcon />
-                </EmptyMedia>
-                <EmptyTitle>
-                  {hasActiveFilters ? "No matching users" : "No users yet"}
-                </EmptyTitle>
-                <EmptyDescription>
-                  {hasActiveFilters
-                    ? "Try adjusting your search or filters."
-                    : "Create a new user to get started."}
-                </EmptyDescription>
-              </EmptyHeader>
-              {hasActiveFilters ? (
-                <EmptyContent>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setGlobalFilter("");
-                      setColumnFilters([]);
-                    }}
-                  >
-                    <XIcon data-icon="inline-start" />
-                    Clear filters
-                  </Button>
-                </EmptyContent>
-              ) : null}
-            </Empty>
-          )}
-        </div>
-      </CardContent>
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  {hasActiveFilters ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        No matching users.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setGlobalFilter("");
+                          setColumnFilters([]);
+                        }}
+                      >
+                        <XIcon data-icon="inline-start" />
+                        Clear filters
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No users yet.
+                    </p>
+                  )}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
       {users.length ? (
-        <div className="flex flex-col gap-3 border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            {table.getFilteredRowModel().rows.length > 0
-              ? `Showing ${table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}–${Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} of ${table.getFilteredRowModel().rows.length}`
-              : "No results"}
-          </p>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Select
-              value={String(table.getState().pagination.pageSize)}
-              onValueChange={(value) =>
-                typeof value === "string" && table.setPageSize(Number(value))
-              }
-            >
-              <SelectTrigger size="sm" className="w-full sm:w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {pageSizeOptions.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {value} rows
+        <div className="flex items-center justify-between px-2">
+          <div className="flex-1 text-sm text-muted-foreground">
+            {table.getFilteredSelectedRowModel().rows.length} of{" "}
+            {table.getFilteredRowModel().rows.length} row(s) selected.
+          </div>
+          <div className="flex items-center space-x-6 lg:space-x-8">
+            <div className="flex items-center space-x-2">
+              <p className="text-sm font-medium">Rows per page</p>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) =>
+                  typeof value === "string" && table.setPageSize(Number(value))
+                }
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={String(pageSize)} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {pageSizeOptions.map((size) => (
+                    <SelectItem key={size} value={size}>
+                      {size}
                     </SelectItem>
                   ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-            <div className="flex gap-2">
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              {table.getPageCount()}
+            </div>
+            <div className="flex items-center space-x-2">
               <Button
-                type="button"
                 variant="outline"
-                size="sm"
-                disabled={!table.getCanPreviousPage()}
+                size="icon"
+                className="size-8"
                 onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
               >
-                Previous
+                <span className="sr-only">Go to previous page</span>
+                <ArrowDownIcon className="size-4 rotate-90" />
               </Button>
               <Button
-                type="button"
                 variant="outline"
-                size="sm"
-                disabled={!table.getCanNextPage()}
+                size="icon"
+                className="size-8"
                 onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
               >
-                Next
+                <span className="sr-only">Go to next page</span>
+                <ArrowDownIcon className="size-4 -rotate-90" />
               </Button>
             </div>
           </div>
         </div>
       ) : null}
-    </Card>
+    </div>
   );
 }
 
@@ -984,57 +982,46 @@ function BanDialog({
 
 export function AdminUsersTableSkeleton() {
   return (
-    <Card>
-      <CardHeader className="flex flex-col gap-4 border-b">
-        <div className="flex gap-2">
-          <Skeleton className="h-9 w-32" />
-          <Skeleton className="h-9 flex-1" />
-          <Skeleton className="h-9 w-20" />
-          <Skeleton className="h-9 w-9" />
-        </div>
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-4 w-24" />
-          <div className="flex gap-2">
-            <Skeleton className="h-9 w-36" />
-            <Skeleton className="h-9 w-36" />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              {[1, 2, 3, 4, 5].map((i) => (
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-2">
+        <Skeleton className="h-9 w-32" />
+        <Skeleton className="h-9 flex-1" />
+        <Skeleton className="h-9 w-20" />
+      </div>
+      <div className="overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <TableHead key={i}>
                   <Skeleton className="h-4 w-16" />
                 </TableHead>
               ))}
-            </TableHeader>
-            <TableBody>
-              {[1, 2, 3, 4, 5].map((row) => (
-                <TableRow key={row}>
-                  {[1, 2, 3, 4, 5].map((col) => (
-                    <TableCell key={col}>
-                      <Skeleton
-                        className={`h-4 ${col === 1 ? "w-48" : col === 2 ? "w-36" : col === 3 ? "w-12" : col === 4 ? "w-16" : "w-8"}`}
-                      />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-      <div className="flex items-center justify-between border-t px-6 py-4">
-        <Skeleton className="h-4 w-48" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-9 w-32" />
-          <Skeleton className="h-9 w-20" />
-          <Skeleton className="h-9 w-20" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[1, 2, 3, 4, 5].map((row) => (
+              <TableRow key={row}>
+                {[1, 2, 3, 4, 5, 6].map((col) => (
+                  <TableCell key={col}>
+                    <Skeleton
+                      className={`h-4 ${col === 1 ? "w-6" : col === 2 ? "w-56" : col === 3 ? "w-14" : col === 4 ? "w-14" : col === 5 ? "w-32" : "w-8"}`}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-between px-2">
+        <Skeleton className="h-4 w-36" />
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-12" />
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
