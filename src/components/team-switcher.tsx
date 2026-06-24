@@ -82,7 +82,7 @@ export function TeamSwitcher({
             <DropdownMenuGroup>
               <DropdownMenuItem className="gap-2 p-2">
                 <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                  <PlusIcon className="size-4" />
+                  <PlusIcon className="size-4" aria-hidden="true" />
                 </div>
                 <div className="font-medium text-muted-foreground">
                   Add team

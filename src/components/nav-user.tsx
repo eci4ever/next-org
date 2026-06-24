@@ -84,22 +84,22 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <SparklesIcon />
+                <SparklesIcon aria-hidden="true" />
                 Upgrade to Pro
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem render={<Link href="/account" />}>
-                <BadgeCheckIcon />
+                <BadgeCheckIcon aria-hidden="true" />
                 Account
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <CreditCardIcon />
+                <CreditCardIcon aria-hidden="true" />
                 Billing
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <BellIcon />
+                <BellIcon aria-hidden="true" />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -110,7 +110,7 @@ export function NavUser({
                   await signOut();
                 }}
               >
-                <LogOutIcon />
+                <LogOutIcon aria-hidden="true" />
                 Log out
               </DropdownMenuItem>
             </DropdownMenuGroup>

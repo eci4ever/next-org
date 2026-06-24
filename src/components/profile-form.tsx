@@ -23,6 +23,8 @@ export function ProfileForm({
   const [image, setImage] = useState(user.image ?? "");
   const [state, formAction, pending] = useActionState(updateProfile, undefined);
 
+  const hasChanges = name !== user.name || image !== (user.image ?? "");
+
   useEffect(() => {
     if (state?.error) toast.error(state.error);
     if (state?.success) {
@@ -30,6 +32,13 @@ export function ProfileForm({
       router.refresh();
     }
   }, [state, router.refresh]);
+
+  useEffect(() => {
+    if (!hasChanges) return;
+    const handler = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasChanges]);
 
   function handleClearImage() {
     setImage("");

@@ -189,7 +189,7 @@ const SortHeader = React.memo(function SortHeader({
       onClick={() => column.toggleSorting(sorted === "asc")}
     >
       {label}
-      <Icon data-icon="inline-end" />
+      <Icon data-icon="inline-end" aria-hidden="true" />
     </Button>
   );
 });
@@ -387,7 +387,7 @@ export function AdminUsersTable({
                 setColumnFilters([]);
               }}
             >
-              <RotateCcwIcon data-icon="inline-start" />
+              <RotateCcwIcon data-icon="inline-start" aria-hidden="true" />
               Reset
             </Button>
           ) : null}
@@ -447,7 +447,7 @@ export function AdminUsersTable({
                           setColumnFilters([]);
                         }}
                       >
-                        <XIcon data-icon="inline-start" />
+                        <XIcon data-icon="inline-start" aria-hidden="true" />
                         Clear filters
                       </Button>
                     </div>
@@ -501,7 +501,7 @@ export function AdminUsersTable({
                 disabled={!table.getCanPreviousPage()}
               >
                 <span className="sr-only">Go to previous page</span>
-                <ArrowDownIcon className="size-4 rotate-90" />
+                <ArrowDownIcon className="size-4 rotate-90" aria-hidden="true" />
               </Button>
               <Button
                 variant="outline"
@@ -511,7 +511,7 @@ export function AdminUsersTable({
                 disabled={!table.getCanNextPage()}
               >
                 <span className="sr-only">Go to next page</span>
-                <ArrowDownIcon className="size-4 -rotate-90" />
+                <ArrowDownIcon className="size-4 -rotate-90" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -554,7 +554,7 @@ export function CreateUserDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button size="lg" />}>
-        <PlusIcon data-icon="inline-start" />
+        <PlusIcon data-icon="inline-start" aria-hidden="true" />
         New user
       </DialogTrigger>
       <DialogContent showCloseButton={false}>
@@ -671,12 +671,12 @@ const UserActions = React.memo(function UserActions({
               disabled={isCurrentUser}
               onClick={() => !isCurrentUser && setRoleOpen(true)}
             >
-              <ShieldIcon />
+              <ShieldIcon aria-hidden="true" />
               Change role
             </DropdownMenuItem>
             {user.banned ? (
               <DropdownMenuItem onClick={() => setUnbanOpen(true)}>
-                <BanIcon />
+                <BanIcon aria-hidden="true" />
                 Unban user
               </DropdownMenuItem>
             ) : (
@@ -684,7 +684,7 @@ const UserActions = React.memo(function UserActions({
                 disabled={isCurrentUser}
                 onClick={() => !isCurrentUser && setBanOpen(true)}
               >
-                <BanIcon />
+                <BanIcon aria-hidden="true" />
                 Ban user
               </DropdownMenuItem>
             )}
@@ -692,7 +692,7 @@ const UserActions = React.memo(function UserActions({
               disabled={isCurrentUser}
               onClick={() => !isCurrentUser && setImpersonateOpen(true)}
             >
-              <UserRoundIcon />
+              <UserRoundIcon aria-hidden="true" />
               Impersonate
             </DropdownMenuItem>
           </DropdownMenuGroup>
@@ -703,7 +703,7 @@ const UserActions = React.memo(function UserActions({
               disabled={isCurrentUser}
               onClick={() => !isCurrentUser && setDeleteOpen(true)}
             >
-              <Trash2Icon />
+              <Trash2Icon aria-hidden="true" />
               Delete user
             </DropdownMenuItem>
           </DropdownMenuGroup>

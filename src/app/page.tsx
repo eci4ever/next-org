@@ -33,7 +33,7 @@ export default function Home() {
       <main className="flex flex-col items-center gap-16 px-6 py-20 text-center">
         <div className="flex flex-col items-center gap-8">
           <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs ring-1 ring-primary/20">
-            <GalleryVerticalEndIcon className="size-6" />
+            <GalleryVerticalEndIcon className="size-6" aria-hidden="true" />
           </div>
           <div className="flex flex-col items-center gap-4">
             <h1 className="max-w-2xl bg-gradient-to-b from-foreground to-foreground/60 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-6xl">

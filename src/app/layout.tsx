@@ -44,8 +44,13 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:ring-2 focus:ring-ring focus:rounded-md">
+          Skip to content
+        </a>
         <TooltipProvider>
-          {children}
+          <div id="main-content" className="flex flex-1 flex-col">
+            {children}
+          </div>
           <Toaster richColors closeButton />
         </TooltipProvider>
       </body>

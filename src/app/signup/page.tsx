@@ -14,9 +14,9 @@ export default async function SignupPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link href="/" className="flex items-center justify-center">
+        <Link href="/" className="flex items-center justify-center" aria-label="Go to home">
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-            <GalleryVerticalEndIcon className="size-5" />
+            <GalleryVerticalEndIcon className="size-5" aria-hidden="true" />
           </div>
         </Link>
         <SignupForm />

@@ -29,17 +29,17 @@ const data = {
   teams: [
     {
       name: "Acme Inc",
-      logo: <GalleryVerticalEndIcon />,
+      logo: <GalleryVerticalEndIcon aria-hidden="true" />,
       plan: "Enterprise",
     },
     {
       name: "Acme Corp.",
-      logo: <AudioLinesIcon />,
+      logo: <AudioLinesIcon aria-hidden="true" />,
       plan: "Startup",
     },
     {
       name: "Evil Corp.",
-      logo: <TerminalIcon />,
+      logo: <TerminalIcon aria-hidden="true" />,
       plan: "Free",
     },
   ],
@@ -47,19 +47,19 @@ const data = {
     {
       title: "Dashboard",
       url: "/dashboard",
-      icon: <LayoutDashboardIcon />,
+      icon: <LayoutDashboardIcon aria-hidden="true" />,
     },
   ],
   platform: [
     {
       title: "Users",
       url: "/admin/users",
-      icon: <UsersIcon />,
+      icon: <UsersIcon aria-hidden="true" />,
     },
     {
       title: "Organization",
       url: "/admin/organization",
-      icon: <Building2Icon />,
+      icon: <Building2Icon aria-hidden="true" />,
     },
   ],
 };
