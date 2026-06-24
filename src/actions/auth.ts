@@ -49,7 +49,7 @@ export async function updateProfile(_prev: unknown, formData: FormData) {
 
   try {
     await auth.api.updateUser({
-      body: { name, image: image || undefined },
+      body: { name, image: image || null },
       headers: await headers(),
     });
   } catch (err) {

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { ChangePasswordForm } from "@/components/change-password-form";
+import { PageHeader } from "@/components/page-header";
 import { ProfileForm } from "@/components/profile-form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,12 @@ export default async function AccountPage() {
   const { user } = session;
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+    <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+      <PageHeader
+        title="Account"
+        description="Manage your profile and security settings."
+      />
+
       <Card>
         <CardHeader>
           <div className="flex items-center gap-4">
@@ -39,7 +45,7 @@ export default async function AccountPage() {
                 variant={user.role === "admin" ? "default" : "secondary"}
                 className="w-fit"
               >
-                {user.role ?? "user"}
+                {user.role === "admin" ? "Admin" : "User"}
               </Badge>
             </div>
           </div>
@@ -48,10 +54,13 @@ export default async function AccountPage() {
           <ProfileForm user={user} />
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
-          <CardTitle>Change Password</CardTitle>
-          <CardDescription>Update your account password</CardDescription>
+          <CardTitle>Change password</CardTitle>
+          <CardDescription>
+            Update your account password. You will need your current password.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ChangePasswordForm />

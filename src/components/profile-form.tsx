@@ -5,7 +5,12 @@ import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { updateProfile } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 export function ProfileForm({
@@ -26,15 +31,22 @@ export function ProfileForm({
     }
   }, [state, router.refresh]);
 
+  function handleClearImage() {
+    setImage("");
+  }
+
   return (
-    <form action={formAction}>
+    <form action={formAction} className="space-y-5">
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="name">Name</FieldLabel>
+          <FieldLabel htmlFor="name">
+            Name <span className="text-destructive">*</span>
+          </FieldLabel>
           <Input
             id="name"
             name="name"
             type="text"
+            placeholder="Your full name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -42,21 +54,35 @@ export function ProfileForm({
         </Field>
         <Field>
           <FieldLabel htmlFor="image">Avatar URL</FieldLabel>
-          <Input
-            id="image"
-            name="image"
-            type="url"
-            placeholder="https://example.com/avatar.jpg"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-          />
-        </Field>
-        <Field>
-          <Button type="submit" disabled={pending}>
-            {pending ? "Saving..." : "Save Changes"}
-          </Button>
+          <div className="flex gap-2">
+            <Input
+              id="image"
+              name="image"
+              type="url"
+              placeholder="https://example.com/avatar.jpg"
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              className="flex-1"
+            />
+            {image ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleClearImage}
+              >
+                Clear
+              </Button>
+            ) : null}
+          </div>
+          <FieldDescription>
+            Provide a URL to an external image. Leave blank for no avatar.
+          </FieldDescription>
         </Field>
       </FieldGroup>
+      <Button type="submit" disabled={pending}>
+        {pending ? "Saving..." : "Save changes"}
+      </Button>
     </form>
   );
 }

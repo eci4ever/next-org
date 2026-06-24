@@ -19,38 +19,44 @@ export function ChangePasswordForm() {
   }, [state]);
 
   return (
-    <form action={formAction}>
+    <form action={formAction} className="space-y-5">
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="currentPassword">Current Password</FieldLabel>
+          <FieldLabel htmlFor="currentPassword">Current password</FieldLabel>
           <Input
             id="currentPassword"
             name="currentPassword"
             type="password"
+            autoComplete="current-password"
             required
           />
         </Field>
         <Field>
-          <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
-          <Input id="newPassword" name="newPassword" type="password" required />
+          <FieldLabel htmlFor="newPassword">New password</FieldLabel>
+          <Input
+            id="newPassword"
+            name="newPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+          />
         </Field>
         <Field>
           <FieldLabel htmlFor="confirmPassword">
-            Confirm New Password
+            Confirm new password
           </FieldLabel>
           <Input
             id="confirmPassword"
             name="confirmPassword"
             type="password"
+            autoComplete="new-password"
             required
           />
         </Field>
-        <Field>
-          <Button type="submit" disabled={pending}>
-            {pending ? "Changing..." : "Change Password"}
-          </Button>
-        </Field>
       </FieldGroup>
+      <Button type="submit" disabled={pending}>
+        {pending ? "Changing..." : "Change password"}
+      </Button>
     </form>
   );
 }
