@@ -20,7 +20,7 @@ export async function signIn(_prev: unknown, formData: FormData) {
     };
   }
 
-  return { success: true };
+  redirect("/dashboard");
 }
 
 export async function signUp(_prev: unknown, formData: FormData) {
@@ -40,7 +40,7 @@ export async function signUp(_prev: unknown, formData: FormData) {
     };
   }
 
-  return { success: true };
+  redirect("/dashboard");
 }
 
 export async function updateProfile(_prev: unknown, formData: FormData) {

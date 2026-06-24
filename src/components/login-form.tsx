@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
-import { toast } from "sonner";
+import { useActionState } from "react";
 import { signIn } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,16 +24,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const router = useRouter();
   const [state, formAction, pending] = useActionState(signIn, undefined);
-
-  useEffect(() => {
-    if (state?.error) toast.error(state.error);
-    if (state?.success) {
-      toast.success("Signed in successfully.");
-      router.push("/dashboard");
-    }
-  }, [state, router.push]);
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -46,6 +35,9 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <form action={formAction}>
+            {state?.error ? (
+              <p className="mb-4 text-sm text-destructive">{state.error}</p>
+            ) : null}
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
