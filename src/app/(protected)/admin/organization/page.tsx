@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function AdminOrganizationPage() {
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+    <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
         title="Organization"
         description="Manage your organization settings."

@@ -22,7 +22,7 @@ export default async function DashboardPage() {
   } catch {}
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+    <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
         title="Dashboard"
         description={`Welcome back, ${session?.user.name ?? "User"}.`}

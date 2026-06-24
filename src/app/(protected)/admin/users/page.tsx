@@ -91,7 +91,7 @@ export default async function AdminUsersPage() {
 
   if (fetchError) {
     return (
-      <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+    <div className="flex flex-1 flex-col gap-6 p-6">
         <PageHeader
           title="Users"
           description="Manage platform users, roles, bans, and impersonation."

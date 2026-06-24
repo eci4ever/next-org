@@ -23,7 +23,7 @@ export default async function AccountPage() {
   const { user } = session;
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6 pt-0">
+    <div className="flex flex-1 flex-col gap-6 p-6">
       <PageHeader
         title="Account"
         description="Manage your profile and security settings."
