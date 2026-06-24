@@ -47,6 +47,7 @@ export function ProfileForm({
             name="name"
             type="text"
             placeholder="Your full name"
+            autoComplete="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
@@ -81,7 +82,7 @@ export function ProfileForm({
         </Field>
       </FieldGroup>
       <Button type="submit" disabled={pending}>
-        {pending ? "Saving..." : "Save changes"}
+        {pending ? "Saving\u2026" : "Save changes"}
       </Button>
     </form>
   );

@@ -55,7 +55,7 @@ export function ChangePasswordForm() {
         </Field>
       </FieldGroup>
       <Button type="submit" disabled={pending}>
-        {pending ? "Changing..." : "Change password"}
+        {pending ? "Changing\u2026" : "Change password"}
       </Button>
     </form>
   );

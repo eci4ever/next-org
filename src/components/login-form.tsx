@@ -46,16 +46,17 @@ export function LoginForm({
                   name="email"
                   type="email"
                   placeholder="m@example.com"
+                  autoComplete="email"
                   required
                 />
               </Field>
               <Field>
                 <FieldLabel htmlFor="password">Password</FieldLabel>
-                <Input id="password" name="password" type="password" required />
+                <Input id="password" name="password" type="password" autoComplete="current-password" required />
               </Field>
               <Field>
                 <Button type="submit" disabled={pending} className="w-full">
-                  {pending ? "Signing in..." : "Login"}
+                  {pending ? "Signing in\u2026" : "Sign in"}
                 </Button>
                 <FieldDescription className="text-center">
                   Don&apos;t have an account?{" "}

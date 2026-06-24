@@ -74,7 +74,7 @@ export default function Home() {
                 className="flex flex-col gap-3 rounded-lg border p-5 text-left"
               >
                 <div className="flex size-8 items-center justify-center rounded-md bg-muted text-foreground">
-                  <Icon className="size-4" />
+                  <Icon className="size-4" aria-hidden="true" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <h3 className="text-sm font-medium">{feature.title}</h3>

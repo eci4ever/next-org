@@ -52,7 +52,7 @@ export function TeamSwitcher({
               <span className="truncate font-medium">{activeTeam.name}</span>
               <span className="truncate text-xs">{activeTeam.plan}</span>
             </div>
-            <ChevronsUpDownIcon className="ml-auto" />
+            <ChevronsUpDownIcon className="ml-auto" aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-fit"

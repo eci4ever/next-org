@@ -140,29 +140,13 @@ const globalFilterFn = (
 
 function formatDateTime(value: string | null) {
   if (!value) return "Unknown";
-  const d = new Date(value);
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const month = months[d.getMonth()];
-  const day = d.getDate();
-  const year = d.getFullYear();
-  const hours = d.getHours();
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const h12 = hours % 12 || 12;
-  return `${month} ${day}, ${year}, ${h12}:${minutes} ${ampm}`;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 function getInitials(name: string, email: string) {
@@ -325,11 +309,12 @@ export function AdminUsersTable({
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative flex-1 md:max-w-xs">
-          <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by name or email..."
+            placeholder="Search by name or email\u2026"
+            aria-label="Search users"
             className="h-9 pl-9 text-sm"
           />
         </div>
@@ -626,7 +611,7 @@ export function CreateUserDialog() {
                 <Field>
                   <FieldLabel>Role</FieldLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full" aria-label="Role">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -649,7 +634,7 @@ export function CreateUserDialog() {
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating..." : "Create user"}
+              {pending ? "Creating\u2026" : "Create user"}
             </Button>
           </DialogFooter>
         </form>
@@ -822,7 +807,7 @@ function RoleDialog({
                 <Field>
                   <FieldLabel>New role</FieldLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full" aria-label="New role">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -845,7 +830,7 @@ function RoleDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : "Save changes"}
+              {pending ? "Saving\u2026" : "Save changes"}
             </Button>
           </DialogFooter>
         </form>
@@ -915,7 +900,7 @@ function BanDialog({
                 <Field>
                   <FieldLabel>Duration</FieldLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full" aria-label="Duration">
                       <SelectValue placeholder="Indefinite" />
                     </SelectTrigger>
                     <SelectContent>
@@ -940,7 +925,7 @@ function BanDialog({
               Cancel
             </Button>
             <Button type="submit" variant="destructive" disabled={pending}>
-              {pending ? "Banning..." : "Ban user"}
+              {pending ? "Banning\u2026" : "Ban user"}
             </Button>
           </DialogFooter>
         </form>
@@ -1048,7 +1033,7 @@ function ConfirmUserActionDialog({
             variant={destructive ? "destructive" : "default"}
             onClick={handleConfirm}
           >
-            {pending ? "Working..." : submitLabel}
+            {pending ? "Working\u2026" : submitLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

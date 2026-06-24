@@ -48,6 +48,7 @@ export function SignupForm({
                   name="name"
                   type="text"
                   placeholder="John Doe"
+                  autoComplete="name"
                   required
                 />
               </Field>
@@ -58,6 +59,7 @@ export function SignupForm({
                   name="email"
                   type="email"
                   placeholder="m@example.com"
+                  autoComplete="email"
                   required
                 />
               </Field>
@@ -69,6 +71,7 @@ export function SignupForm({
                       id="password"
                       name="password"
                       type="password"
+                      autoComplete="new-password"
                       required
                     />
                   </Field>
@@ -80,6 +83,7 @@ export function SignupForm({
                       id="confirm-password"
                       name="confirm-password"
                       type="password"
+                      autoComplete="new-password"
                       required
                     />
                   </Field>
@@ -90,7 +94,7 @@ export function SignupForm({
               </Field>
               <Field>
                 <Button type="submit" disabled={pending} className="w-full">
-                  {pending ? "Creating account..." : "Create Account"}
+                  {pending ? "Creating account\u2026" : "Create account"}
                 </Button>
                 <FieldDescription className="text-center">
                   Already have an account?{" "}

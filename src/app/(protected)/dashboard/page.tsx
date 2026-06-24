@@ -36,7 +36,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
               {totalUsers}
             </p>
           </CardContent>
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
               {totalAdmins}
             </p>
           </CardContent>
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
               {totalBanned}
             </p>
           </CardContent>
@@ -72,7 +72,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold tracking-tight">
+            <p className="text-3xl font-semibold tracking-tight tabular-nums">
               {totalUsers - totalBanned}
             </p>
           </CardContent>
