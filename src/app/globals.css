@@ -107,9 +107,9 @@
   --background: oklch(0.9545 0.0046 258.3249);
   --foreground: oklch(0.2217 0.0126 264.2756);
   --destructive-foreground: oklch(1 0 0);
-  --font-sans: Geist, ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
-  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: Outfit, sans-serif;
+  --font-serif: Merriweather, serif;
+  --font-mono: Fira Code, monospace;
   --shadow-color: #181b21;
   --shadow-opacity: 0.08;
   --shadow-blur: 4px;
