@@ -1,27 +1,24 @@
-import { auth } from "@/lib/auth"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-import { AppSidebar } from "@/components/app-sidebar"
-import { Breadcrumbs } from "@/components/breadcrumbs"
-import { Badge } from "@/components/ui/badge"
+import { redirect } from "next/navigation";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/sidebar";
+import { getSession } from "@/lib/auth";
 
 export default async function ProtectedLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  })
+  const session = await getSession();
 
   if (!session) {
-    redirect("/login")
+    redirect("/login");
   }
 
   return (
@@ -38,7 +35,9 @@ export default async function ProtectedLayout({
             <Breadcrumbs />
           </div>
           <div className="flex items-center gap-2 px-4">
-            <Badge variant={session.user.role === "admin" ? "default" : "secondary"}>
+            <Badge
+              variant={session.user.role === "admin" ? "default" : "secondary"}
+            >
               {session.user.role ?? "user"}
             </Badge>
           </div>
@@ -46,5 +45,5 @@ export default async function ProtectedLayout({
         {children}
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

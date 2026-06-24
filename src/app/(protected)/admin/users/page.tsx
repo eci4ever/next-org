@@ -1,11 +1,23 @@
+import dynamic from "next/dynamic";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  type AdminUserRow,
-  type AdminUsersFilters,
-  AdminUsersTable,
+import type {
+  AdminUserRow,
+  AdminUsersFilters,
 } from "@/components/admin-users-table";
-import { auth } from "@/lib/auth";
+import { auth, getSession } from "@/lib/auth";
+
+const AdminUsersTable = dynamic(
+  () =>
+    import("@/components/admin-users-table").then((m) => ({
+      default: m.AdminUsersTable,
+    })),
+  {
+    loading: () => (
+      <p className="text-sm text-muted-foreground">Loading users table...</p>
+    ),
+  },
+);
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -99,10 +111,9 @@ export default async function AdminUsersPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const requestHeaders = await headers();
-  const session = await auth.api.getSession({
-    headers: requestHeaders,
-  });
+  const [requestHeaders, params] = await Promise.all([headers(), searchParams]);
+
+  const session = await getSession();
 
   if (!session) {
     redirect("/login");
@@ -111,8 +122,6 @@ export default async function AdminUsersPage({
   if (session.user.role !== "admin") {
     redirect("/dashboard");
   }
-
-  const params = await searchParams;
   const page = parsePositiveInteger(firstParam(params.page), 1);
   const pageSize = parsePageSize(firstParam(params.pageSize));
   const q = firstParam(params.q)?.trim() ?? "";

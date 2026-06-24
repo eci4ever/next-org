@@ -1,41 +1,41 @@
-"use client"
+"use client";
 
-import { useActionState, useEffect } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
+import { signUp } from "@/actions/auth";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { signUp } from "@/actions/auth"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const router = useRouter()
-  const [state, formAction, pending] = useActionState(signUp, undefined)
+  const router = useRouter();
+  const [state, formAction, pending] = useActionState(signUp, undefined);
 
   useEffect(() => {
-    if (state?.error) toast.error(state.error)
+    if (state?.error) toast.error(state.error);
     if (state?.success) {
-      toast.success("Account created successfully.")
-      router.push("/dashboard")
+      toast.success("Account created successfully.");
+      router.push("/dashboard");
     }
-  }, [state])
+  }, [state, router.push]);
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -102,7 +102,10 @@ export function SignupForm({
                 </Button>
                 <FieldDescription className="text-center">
                   Already have an account?{" "}
-                  <Link href="/login" className="underline underline-offset-4 hover:text-foreground">
+                  <Link
+                    href="/login"
+                    className="underline underline-offset-4 hover:text-foreground"
+                  >
                     Sign in
                   </Link>
                 </FieldDescription>
@@ -112,9 +115,10 @@ export function SignupForm({
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <Link href="#">Terms of Service</Link>{" "}
-        and <Link href="#">Privacy Policy</Link>.
+        By clicking continue, you agree to our{" "}
+        <Link href="#">Terms of Service</Link> and{" "}
+        <Link href="#">Privacy Policy</Link>.
       </FieldDescription>
     </div>
-  )
+  );
 }

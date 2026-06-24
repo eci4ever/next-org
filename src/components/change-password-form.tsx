@@ -1,23 +1,22 @@
-"use client"
+"use client";
 
-import { useActionState, useEffect } from "react"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { changePassword } from "@/actions/auth"
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
+import { changePassword } from "@/actions/auth";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export function ChangePasswordForm() {
-  const [state, formAction, pending] = useActionState(changePassword, undefined)
+  const [state, formAction, pending] = useActionState(
+    changePassword,
+    undefined,
+  );
 
   useEffect(() => {
-    if (state?.error) toast.error(state.error)
-    if (state?.success) toast.success("Password changed successfully.")
-  }, [state])
+    if (state?.error) toast.error(state.error);
+    if (state?.success) toast.success("Password changed successfully.");
+  }, [state]);
 
   return (
     <form action={formAction}>
@@ -33,15 +32,12 @@ export function ChangePasswordForm() {
         </Field>
         <Field>
           <FieldLabel htmlFor="newPassword">New Password</FieldLabel>
-          <Input
-            id="newPassword"
-            name="newPassword"
-            type="password"
-            required
-          />
+          <Input id="newPassword" name="newPassword" type="password" required />
         </Field>
         <Field>
-          <FieldLabel htmlFor="confirmPassword">Confirm New Password</FieldLabel>
+          <FieldLabel htmlFor="confirmPassword">
+            Confirm New Password
+          </FieldLabel>
           <Input
             id="confirmPassword"
             name="confirmPassword"
@@ -56,5 +52,5 @@ export function ChangePasswordForm() {
         </Field>
       </FieldGroup>
     </form>
-  )
+  );
 }

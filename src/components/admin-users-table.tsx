@@ -183,7 +183,7 @@ function serializeSorting(sorting: SortingState) {
   return `${firstSort.id}:${firstSort.desc ? "desc" : "asc"}`;
 }
 
-function SortHeader({
+const SortHeader = React.memo(function SortHeader({
   column,
   label,
 }: {
@@ -213,7 +213,7 @@ function SortHeader({
       <Icon data-icon="inline-end" />
     </Button>
   );
-}
+});
 
 function useQueryUpdater() {
   const router = useRouter();
@@ -266,7 +266,6 @@ export function AdminUsersTable({
 }: AdminUsersTableProps) {
   const updateQuery = useQueryUpdater();
   const [search, setSearch] = useState(filters.q);
-  const data = useMemo(() => users, [users]);
   const pageCount = Math.max(1, Math.ceil(total / filters.pageSize));
   const sorting = useMemo(() => parseSorting(filters.sort), [filters.sort]);
   const pagination = useMemo<PaginationState>(
@@ -276,10 +275,6 @@ export function AdminUsersTable({
     }),
     [filters.page, filters.pageSize],
   );
-
-  useEffect(() => {
-    setSearch(filters.q);
-  }, [filters.q]);
 
   const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
     const nextSorting =
@@ -376,7 +371,7 @@ export function AdminUsersTable({
   );
 
   const table = useReactTable({
-    data,
+    data: users,
     columns,
     pageCount,
     state: {
@@ -498,7 +493,7 @@ export function AdminUsersTable({
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {data.length ? (
+          {users.length ? (
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -703,7 +698,7 @@ function CreateUserDialog() {
   );
 }
 
-function UserActions({
+const UserActions = React.memo(function UserActions({
   user,
   currentUserId,
 }: {
@@ -802,7 +797,7 @@ function UserActions({
       />
     </>
   );
-}
+});
 
 function RoleDialog({
   user,
@@ -819,16 +814,14 @@ function RoleDialog({
     undefined,
   );
 
-  useEffect(() => {
-    if (open) {
-      setRole(roleValue(user.role));
-    }
-  }, [open, user.role]);
-
   useActionFeedback(state, () => onOpenChange(false));
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      key={`role-${user.id}-${open}`}
+      open={open}
+      onOpenChange={onOpenChange}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Change role</DialogTitle>

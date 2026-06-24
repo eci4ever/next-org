@@ -1,10 +1,17 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import {
+  AudioLinesIcon,
+  Building2Icon,
+  GalleryVerticalEndIcon,
+  LayoutDashboardIcon,
+  TerminalIcon,
+  UsersIcon,
+} from "lucide-react";
+import Link from "next/link";
+import type * as React from "react";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -16,15 +23,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import {
-  GalleryVerticalEndIcon,
-  AudioLinesIcon,
-  TerminalIcon,
-  LayoutDashboardIcon,
-  UsersIcon,
-  Building2Icon,
-} from "lucide-react"
+} from "@/components/ui/sidebar";
 
 const data = {
   teams: [
@@ -63,12 +62,22 @@ const data = {
       icon: <Building2Icon />,
     },
   ],
-}
+};
 
 export function AppSidebar({
   session,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { session: { user: { id: string; name: string; email: string; image?: string | null; role?: string | null } } }) {
+}: React.ComponentProps<typeof Sidebar> & {
+  session: {
+    user: {
+      id: string;
+      name: string;
+      email: string;
+      image?: string | null;
+      role?: string | null;
+    };
+  };
+}) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -80,7 +89,10 @@ export function AppSidebar({
           <SidebarMenu>
             {data.main.map((item) => (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton render={<Link href={item.url} />} tooltip={item.title}>
+                <SidebarMenuButton
+                  render={<Link href={item.url} />}
+                  tooltip={item.title}
+                >
                   {item.icon}
                   <span>{item.title}</span>
                 </SidebarMenuButton>
@@ -88,13 +100,16 @@ export function AppSidebar({
             ))}
           </SidebarMenu>
         </SidebarGroup>
-        {session.user.role === "admin" && (
+        {session.user.role === "admin" ? (
           <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
               {data.platform.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton render={<Link href={item.url} />} tooltip={item.title}>
+                  <SidebarMenuButton
+                    render={<Link href={item.url} />}
+                    tooltip={item.title}
+                  >
                     {item.icon}
                     <span>{item.title}</span>
                   </SidebarMenuButton>
@@ -102,12 +117,12 @@ export function AppSidebar({
               ))}
             </SidebarMenu>
           </SidebarGroup>
-        )}
+        ) : null}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={session.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

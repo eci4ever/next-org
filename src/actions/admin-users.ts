@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth, getSession } from "@/lib/auth";
 
 export type AdminUserActionState =
   | {
@@ -22,9 +22,7 @@ type AdminSession = {
 const USERS_PATH = "/admin/users";
 
 async function requireAdmin(): Promise<AdminSession> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session || session.user.role !== "admin") {
     throw new Error("You are not allowed to manage users.");

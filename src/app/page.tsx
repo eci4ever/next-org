@@ -1,7 +1,7 @@
-import Link from "next/link"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { GalleryVerticalEndIcon } from "lucide-react"
+import { GalleryVerticalEndIcon } from "lucide-react";
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   return (
@@ -15,20 +15,26 @@ export default function Home() {
             Welcome to Your App
           </h1>
           <p className="max-w-md text-lg text-muted-foreground">
-            A modern platform to manage your workflow. Get started by creating an
-            account or signing in.
+            A modern platform to manage your workflow. Get started by creating
+            an account or signing in.
           </p>
         </div>
         <div className="flex flex-col items-center gap-3 sm:flex-row">
           <Link
             href="/login"
-            className={cn(buttonVariants({ variant: "default", size: "lg" }), "w-full sm:w-auto")}
+            className={cn(
+              buttonVariants({ variant: "default", size: "lg" }),
+              "w-full sm:w-auto",
+            )}
           >
             Login
           </Link>
           <Link
             href="/signup"
-            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto")}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "w-full sm:w-auto",
+            )}
           >
             Sign Up
           </Link>
@@ -41,5 +47,5 @@ export default function Home() {
         </Link>
       </main>
     </div>
-  )
+  );
 }
