@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+const YEAR = new Date().getFullYear();
+
 const footerLinks = [
   {
     label: "Product",
@@ -31,7 +33,7 @@ const footerLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-b-0 py-16">
+    <footer className="mt-40 @md:mt-52 border-t py-16">
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-4">
@@ -41,7 +43,7 @@ export function Footer() {
               </div>
               nimfi
             </Link>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               All-in-one business operations for Malaysian SMEs.
             </p>
           </div>
@@ -66,7 +68,7 @@ export function Footer() {
           ))}
         </div>
         <div className="mt-12 border-t pt-6 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Nimfi. All rights reserved. Made in Malaysia.
+          &copy; {YEAR} Nimfi. All rights reserved. Made in Malaysia.
         </div>
       </div>
     </footer>

@@ -1,4 +1,4 @@
-import { GalleryVerticalEndIcon } from "lucide-react";
+import { GalleryVerticalEnd } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SignupForm } from "@/components/signup-form";
@@ -14,10 +14,11 @@ export default async function SignupPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link href="/" className="flex items-center justify-center" aria-label="Go to home">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-            <GalleryVerticalEndIcon className="size-5" aria-hidden="true" />
+        <Link href="/" className="flex items-center gap-2 self-center font-medium">
+          <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <GalleryVerticalEnd className="size-4" />
           </div>
+          Nimfi
         </Link>
         <SignupForm />
       </div>

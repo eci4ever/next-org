@@ -34,23 +34,25 @@ const faqs = [
 
 export function FAQ() {
   return (
-    <section id="faq" className="scroll-mt-20 border-b py-24">
+    <section id="faq" className="scroll-mt-20 mt-40 @md:mt-52">
       <div className="mx-auto max-w-7xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-pretty sm:text-4xl">
-            Frequently Asked Questions
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+        <div className="flex flex-col @lg:grid @lg:grid-cols-12 gap-x-5 gap-y-6 items-baseline">
+          <div className="@lg:col-span-5">
+            <h2 className="text-4xl font-[450] tracking-[-3.36px] leading-[1.05] sm:text-5xl text-balance">
+              Frequently Asked Questions
+            </h2>
+          </div>
+          <p className="@lg:col-span-6 @lg:col-start-7 text-lg text-muted-foreground leading-relaxed">
             Everything you need to know about Nimfi.
           </p>
         </div>
-        <div className="mx-auto mt-16 max-w-2xl">
+        <div className="mx-auto mt-16 max-w-3xl">
           <Accordion>
             {faqs.map((faq) => (
               <AccordionItem key={faq.q} value={faq.q}>
                 <AccordionTrigger>{faq.q}</AccordionTrigger>
                 <AccordionContent>
-                  <p>{faq.a}</p>
+                  <p className="text-muted-foreground leading-relaxed">{faq.a}</p>
                 </AccordionContent>
               </AccordionItem>
             ))}

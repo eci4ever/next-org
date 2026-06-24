@@ -6,6 +6,7 @@ import {
   ReceiptIcon,
   UsersIcon,
 } from "lucide-react";
+import { Reveal } from "@/components/marketing/reveal";
 
 const modules = [
   {
@@ -54,40 +55,41 @@ const modules = [
 
 export function Features() {
   return (
-    <section id="features" className="scroll-mt-20 border-b py-24">
+    <section id="features" className="scroll-mt-20 mt-40 @md:mt-52">
       <div className="mx-auto max-w-7xl px-6">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-pretty sm:text-4xl">
-            Everything You Need to Run Your Business
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+        <div className="flex flex-col @lg:grid @lg:grid-cols-12 gap-x-5 gap-y-6 items-baseline">
+          <div className="@lg:col-span-5">
+            <h2 className="text-4xl font-[450] tracking-[-3.36px] leading-[1.05] sm:text-5xl text-balance">
+              Everything You Need to Run Your Business
+            </h2>
+          </div>
+          <p className="@lg:col-span-6 @lg:col-start-7 text-lg text-muted-foreground leading-relaxed">
             Six integrated modules that work together so you don't have to
             juggle six different tools.
           </p>
         </div>
-        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {modules.map((mod) => {
+        <div className="mt-16 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {modules.map((mod, i) => {
             const Icon = mod.icon;
             return (
-              <div
-                key={mod.title}
-                className="flex flex-col gap-4 rounded-lg border p-6"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground">
-                    <Icon className="size-5" aria-hidden="true" />
+              <Reveal key={mod.title} variant="fade-up-sm" delay={i * 80} duration={400}>
+                <div className="flex flex-col gap-4 rounded-lg border p-6 h-full">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground">
+                      <Icon className="size-5" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium">{mod.title}</h3>
+                      <span className="text-xs text-muted-foreground">
+                        {mod.badge}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-medium">{mod.title}</h3>
-                    <span className="text-xs text-muted-foreground">
-                      {mod.badge}
-                    </span>
-                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {mod.description}
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {mod.description}
-                </p>
-              </div>
+              </Reveal>
             );
           })}
         </div>

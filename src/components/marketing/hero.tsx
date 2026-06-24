@@ -5,18 +5,18 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden border-b">
-      <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:py-40">
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-xs font-medium text-muted-foreground">
+    <section className="relative overflow-hidden">
+      <div className="mx-auto max-w-7xl px-6 pt-24 pb-16 sm:pt-32 sm:pb-20 lg:pt-40 lg:pb-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-xs font-medium text-muted-foreground tracking-wide">
             <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
             Early access — join 50+ Malaysian SMEs
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-pretty sm:text-5xl lg:text-6xl">
+          <h1 className="text-5xl font-[400] tracking-[-3.84px] leading-[1.05] sm:text-6xl lg:text-7xl text-balance">
             Your Business Operations,{" "}
-            <span className="text-primary/70">One Platform</span>
+            <span className="text-muted-foreground">One Platform</span>
           </h1>
-          <p className="mt-6 max-w-2xl text-balance text-lg text-muted-foreground sm:text-xl">
+          <p className="mt-6 max-w-2xl mx-auto text-balance text-lg text-muted-foreground sm:text-xl leading-relaxed">
             Nimfi helps Malaysian SMEs manage attendance, appointments,
             e-invoice-ready billing, customers, teams, and daily operations — no
             more juggling spreadsheets and messy paper trails.
@@ -36,10 +36,10 @@ export function Hero() {
           </div>
         </div>
       </div>
-      <div className="mx-auto max-w-6xl px-6 pb-24">
-        <Card className="overflow-hidden shadow-xl ring-1 ring-foreground/5">
+      <div className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32">
+        <Card className="overflow-hidden shadow-sm border">
           <CardContent className="p-0">
-            <div className="flex flex-col gap-1 bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex flex-col gap-1 bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="flex">
                   {[1, 2, 3].map((i) => (
