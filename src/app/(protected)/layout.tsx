@@ -26,7 +26,7 @@ export default async function ProtectedLayout({
       <AppSidebar session={session} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex items-center gap-2 px-6">
             <SidebarTrigger className="-ml-1" />
             <Separator
               orientation="vertical"
@@ -34,7 +34,7 @@ export default async function ProtectedLayout({
             />
             <Breadcrumbs />
           </div>
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex items-center gap-2 px-6">
             <Badge
               variant={session.user.role === "admin" ? "default" : "secondary"}
             >
