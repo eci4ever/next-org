@@ -568,7 +568,7 @@ export function CreateUserDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button />}>
+      <DialogTrigger render={<Button size="lg" />}>
         <PlusIcon data-icon="inline-start" />
         New user
       </DialogTrigger>
