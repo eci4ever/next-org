@@ -2,11 +2,13 @@
 
 import {
   type ColumnDef,
+  type ColumnFiltersState,
+  type SortingState,
   flexRender,
   getCoreRowModel,
-  type OnChangeFn,
-  type PaginationState,
-  type SortingState,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -14,17 +16,23 @@ import {
   ArrowUpDownIcon,
   ArrowUpIcon,
   BanIcon,
+  Columns3Icon,
   MoreHorizontalIcon,
   PlusIcon,
+  RotateCcwIcon,
   SearchIcon,
   ShieldIcon,
   Trash2Icon,
   UserRoundIcon,
+  XIcon,
 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import * as React from "react";
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import {
   type AdminUserActionState,
@@ -48,13 +56,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -81,12 +83,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -96,6 +93,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -118,29 +116,48 @@ export type AdminUserRow = {
   createdAt: string | null;
 };
 
-export type AdminUsersFilters = {
-  q: string;
-  searchField: "email" | "name";
-  role: "all" | "user" | "admin";
-  status: "all" | "active" | "banned";
-  sort: string;
-  page: number;
-  pageSize: number;
-};
-
 type AdminUsersTableProps = {
   users: AdminUserRow[];
   total: number;
-  filters: AdminUsersFilters;
   currentUserId: string;
 };
 
-const pageSizeOptions = ["10", "20", "50"];
-const defaultSort = "createdAt:desc";
-
-const dateFormatter = new Intl.DateTimeFormat("en", {
-  dateStyle: "medium",
+const createUserSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().optional(),
+  role: z.enum(["user", "admin"]),
 });
+
+const setRoleSchema = z.object({
+  role: z.enum(["user", "admin"]),
+});
+
+const pageSizeOptions = ["10", "20", "50"];
+
+const globalFilterFn = (
+  row: { original: AdminUserRow },
+  _columnId: string,
+  filterValue: string,
+) => {
+  const q = filterValue.toLowerCase();
+  return (
+    row.original.name.toLowerCase().includes(q) ||
+    row.original.email.toLowerCase().includes(q)
+  );
+};
+
+function formatDate(value: string | null) {
+  if (!value) return "Unknown";
+  const d = new Date(value);
+  return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) return "Unknown";
+  const d = new Date(value);
+  return `${formatDate(value)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 
 function getInitials(name: string, email: string) {
   const source = name || email;
@@ -153,34 +170,6 @@ function roleValue(role: string | null) {
 
 function statusLabel(user: AdminUserRow) {
   return user.banned ? "Banned" : "Active";
-}
-
-function formatDate(value: string | null) {
-  if (!value) {
-    return "Unknown";
-  }
-
-  return dateFormatter.format(new Date(value));
-}
-
-function parseSorting(sort: string): SortingState {
-  const [id, direction] = sort.split(":");
-
-  if (!id) {
-    return [{ id: "createdAt", desc: true }];
-  }
-
-  return [{ id, desc: direction !== "asc" }];
-}
-
-function serializeSorting(sorting: SortingState) {
-  const [firstSort] = sorting;
-
-  if (!firstSort) {
-    return defaultSort;
-  }
-
-  return `${firstSort.id}:${firstSort.desc ? "desc" : "asc"}`;
 }
 
 const SortHeader = React.memo(function SortHeader({
@@ -215,86 +204,28 @@ const SortHeader = React.memo(function SortHeader({
   );
 });
 
-function useQueryUpdater() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  return React.useCallback(
-    (updates: Record<string, string | number | null | undefined>) => {
-      const next = new URLSearchParams(searchParams.toString());
-
-      for (const [key, value] of Object.entries(updates)) {
-        if (value === null || value === undefined || value === "") {
-          next.delete(key);
-        } else {
-          next.set(key, String(value));
-        }
-      }
-
-      const query = next.toString();
-      router.push(query ? `${pathname}?${query}` : pathname);
-    },
-    [pathname, router, searchParams],
-  );
-}
-
-function useActionFeedback(
-  state: AdminUserActionState,
-  onSuccess?: () => void,
-) {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (state?.error) {
-      toast.error(state.error);
-    }
-
-    if (state?.success) {
-      toast.success(state.success);
-      onSuccess?.();
-      router.refresh();
-    }
-  }, [onSuccess, router, state]);
-}
-
 export function AdminUsersTable({
   users,
   total,
-  filters,
   currentUserId,
 }: AdminUsersTableProps) {
-  const updateQuery = useQueryUpdater();
-  const [search, setSearch] = useState(filters.q);
-  const pageCount = Math.max(1, Math.ceil(total / filters.pageSize));
-  const sorting = useMemo(() => parseSorting(filters.sort), [filters.sort]);
-  const pagination = useMemo<PaginationState>(
-    () => ({
-      pageIndex: filters.page - 1,
-      pageSize: filters.pageSize,
-    }),
-    [filters.page, filters.pageSize],
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "createdAt", desc: true },
+  ]);
+
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
   );
+  useEffect(() => {
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setGlobalFilter(searchInput), 300);
+  }, [searchInput]);
 
-  const handleSortingChange: OnChangeFn<SortingState> = (updater) => {
-    const nextSorting =
-      typeof updater === "function" ? updater(sorting) : updater;
-
-    updateQuery({
-      sort: serializeSorting(nextSorting),
-      page: 1,
-    });
-  };
-
-  const handlePaginationChange: OnChangeFn<PaginationState> = (updater) => {
-    const nextPagination =
-      typeof updater === "function" ? updater(pagination) : updater;
-
-    updateQuery({
-      page: nextPagination.pageIndex + 1,
-      pageSize: nextPagination.pageSize,
-    });
-  };
+  const hasActiveFilters = globalFilter !== "" || columnFilters.length > 0;
 
   const columns = useMemo<ColumnDef<AdminUserRow>[]>(
     () => [
@@ -373,92 +304,57 @@ export function AdminUsersTable({
   const table = useReactTable({
     data: users,
     columns,
-    pageCount,
     state: {
       sorting,
-      pagination,
+      globalFilter,
+      columnFilters,
+      columnVisibility,
     },
-    manualFiltering: true,
-    manualPagination: true,
-    manualSorting: true,
-    onSortingChange: handleSortingChange,
-    onPaginationChange: handlePaginationChange,
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    globalFilterFn,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    initialState: { pagination: { pageSize: 10 } },
   });
 
-  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    updateQuery({
-      q: search,
-      page: 1,
-    });
-  }
-
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <form
-          onSubmit={handleSearchSubmit}
-          className="flex w-full flex-col gap-2 sm:flex-row md:max-w-2xl"
-        >
-          <Select
-            value={filters.searchField}
-            onValueChange={(value) =>
-              typeof value === "string" &&
-              updateQuery({
-                searchField: value,
-                page: 1,
-              })
-            }
-          >
-            <SelectTrigger size="sm" className="w-full sm:w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <div className="flex min-w-0 flex-1 gap-2">
+    <Card>
+      <CardHeader className="flex flex-col gap-4 border-b">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="relative flex-1 md:max-w-md">
+            <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search users"
-              className="min-w-0"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search by name or email..."
+              className="pl-9"
             />
-            <Button type="submit" variant="outline">
-              <SearchIcon data-icon="inline-start" />
-              Search
-            </Button>
           </div>
-        </form>
-        <CreateUserDialog />
-      </div>
-
-      <Card>
-        <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-1">
-            <CardTitle>Users</CardTitle>
-            <CardDescription>
-              {total} {total === 1 ? "user" : "users"} found
-            </CardDescription>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-wrap items-center gap-2">
             <Select
-              value={filters.role}
+              value={
+                (columnFilters.find((f) => f.id === "role")?.value as string) ??
+                "all"
+              }
               onValueChange={(value) =>
                 typeof value === "string" &&
-                updateQuery({
-                  role: value === "all" ? null : value,
-                  status: null,
-                  page: 1,
+                setColumnFilters((prev) => {
+                  const rest = prev.filter(
+                    (f) => f.id !== "role" && f.id !== "banned",
+                  );
+                  if (value === "all")
+                    return [...rest, { id: "banned", value: false }];
+                  return [...rest, { id: "role", value }];
                 })
               }
             >
-              <SelectTrigger size="sm" className="w-full sm:w-36">
-                <SelectValue />
+              <SelectTrigger size="sm" className="w-[120px]">
+                <SelectValue placeholder="All roles" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -469,30 +365,89 @@ export function AdminUsersTable({
               </SelectContent>
             </Select>
             <Select
-              value={filters.status}
+              value={
+                columnFilters.find((f) => f.id === "role")
+                  ? "all"
+                  : ((columnFilters.find((f) => f.id === "banned")
+                      ?.value as string) ?? "all")
+              }
               onValueChange={(value) =>
                 typeof value === "string" &&
-                updateQuery({
-                  status: value === "all" ? null : value,
-                  role: null,
-                  page: 1,
+                setColumnFilters((prev) => {
+                  const rest = prev.filter(
+                    (f) => f.id !== "role" && f.id !== "banned",
+                  );
+                  if (value === "all") return rest;
+                  return [...rest, { id: "banned", value: value === "banned" }];
                 })
               }
             >
-              <SelectTrigger size="sm" className="w-full sm:w-36">
-                <SelectValue />
+              <SelectTrigger size="sm" className="w-[120px]">
+                <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="all">All status</SelectItem>
+                  <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="banned">Banned</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={<Button variant="outline" size="sm" />}
+              >
+                <Columns3Icon data-icon="inline-start" />
+                Columns
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuLabel>Columns</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {table
+                  .getAllColumns()
+                  .filter((c) => c.getCanHide())
+                  .map((column) => (
+                    <DropdownMenuItem
+                      key={column.id}
+                      onClick={() => column.toggleVisibility()}
+                    >
+                      <label className="flex items-center gap-2 capitalize">
+                        <input
+                          type="checkbox"
+                          className="size-4 accent-foreground"
+                          checked={column.getIsVisible()}
+                          readOnly
+                        />
+                        {column.id === "banned" ? "status" : column.id}
+                      </label>
+                    </DropdownMenuItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {hasActiveFilters ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchInput("");
+                  setGlobalFilter("");
+                  setColumnFilters([]);
+                }}
+              >
+                <RotateCcwIcon data-icon="inline-start" />
+                Reset
+              </Button>
+            ) : null}
           </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {table.getFilteredRowModel().rows.length} of {total} user
+          {total === 1 ? "" : "s"}
+        </p>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
           {users.length ? (
             <Table>
               <TableHeader>
@@ -532,96 +487,117 @@ export function AdminUsersTable({
                 <EmptyMedia variant="icon">
                   <UserRoundIcon />
                 </EmptyMedia>
-                <EmptyTitle>No users found</EmptyTitle>
+                <EmptyTitle>
+                  {hasActiveFilters ? "No matching users" : "No users yet"}
+                </EmptyTitle>
                 <EmptyDescription>
-                  Adjust the search or filters to find matching users.
+                  {hasActiveFilters
+                    ? "Try adjusting your search or filters."
+                    : "Create a new user to get started."}
                 </EmptyDescription>
               </EmptyHeader>
-              <EmptyContent>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    updateQuery({
-                      q: null,
-                      role: null,
-                      status: null,
-                      page: 1,
-                    })
-                  }
-                >
-                  Clear filters
-                </Button>
-              </EmptyContent>
+              {hasActiveFilters ? (
+                <EmptyContent>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setGlobalFilter("");
+                      setColumnFilters([]);
+                    }}
+                  >
+                    <XIcon data-icon="inline-start" />
+                    Clear filters
+                  </Button>
+                </EmptyContent>
+              ) : null}
             </Empty>
           )}
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-muted-foreground">
-              Page {filters.page} of {pageCount}
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Select
-                value={String(filters.pageSize)}
-                onValueChange={(value) =>
-                  typeof value === "string" && table.setPageSize(Number(value))
-                }
+        </div>
+      </CardContent>
+      {users.length ? (
+        <div className="flex flex-col gap-3 border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            {table.getFilteredRowModel().rows.length > 0
+              ? `Showing ${table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}–${Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} of ${table.getFilteredRowModel().rows.length}`
+              : "No results"}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Select
+              value={String(table.getState().pagination.pageSize)}
+              onValueChange={(value) =>
+                typeof value === "string" && table.setPageSize(Number(value))
+              }
+            >
+              <SelectTrigger size="sm" className="w-full sm:w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {pageSizeOptions.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {value} rows
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!table.getCanPreviousPage()}
+                onClick={() => table.previousPage()}
               >
-                <SelectTrigger size="sm" className="w-full sm:w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {pageSizeOptions.map((value) => (
-                      <SelectItem key={value} value={value}>
-                        {value} rows
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!table.getCanPreviousPage()}
-                  onClick={() => table.previousPage()}
-                >
-                  Previous
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!table.getCanNextPage()}
-                  onClick={() => table.nextPage()}
-                >
-                  Next
-                </Button>
-              </div>
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!table.getCanNextPage()}
+                onClick={() => table.nextPage()}
+              >
+                Next
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      ) : null}
+    </Card>
   );
 }
 
-function CreateUserDialog() {
-  const [open, setOpen] = useState(false);
-  const [role, setRole] = useState("user");
-  const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction, pending] = useActionState(
-    createAdminUser,
-    undefined,
-  );
+type CreateUserForm = z.infer<typeof createUserSchema>;
 
-  useActionFeedback(state, () => {
-    formRef.current?.reset();
-    setRole("user");
-    setOpen(false);
+export function CreateUserDialog() {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+  const router = useRouter();
+
+  const form = useForm<CreateUserForm>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: { name: "", email: "", password: "", role: "user" },
   });
+
+  async function onSubmit(values: CreateUserForm) {
+    setPending(true);
+    const formData = new FormData();
+    formData.set("name", values.name);
+    formData.set("email", values.email);
+    formData.set("password", values.password ?? "");
+    formData.set("role", values.role);
+    const result = await createAdminUser(undefined, formData);
+    if (result?.error) toast.error(result.error);
+    if (result?.success) {
+      toast.success(result.success);
+      form.reset();
+      setOpen(false);
+      router.refresh();
+    }
+    setPending(false);
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -629,65 +605,82 @@ function CreateUserDialog() {
         <PlusIcon data-icon="inline-start" />
         New user
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>Create user</DialogTitle>
           <DialogDescription>
-            Add a user with a platform role. Password is optional.
+            Add a new user and assign their initial role.
           </DialogDescription>
         </DialogHeader>
-        <form ref={formRef} action={formAction}>
-          <input type="hidden" name="role" value={role} />
-          <FieldGroup>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="grid gap-4">
             <Field>
-              <FieldLabel htmlFor="create-user-name">Name</FieldLabel>
-              <Input id="create-user-name" name="name" required />
+              <FieldLabel htmlFor="create-user-name">
+                Name <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Input id="create-user-name" {...form.register("name")} />
+              {form.formState.errors.name && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.name.message}
+                </p>
+              )}
             </Field>
             <Field>
-              <FieldLabel htmlFor="create-user-email">Email</FieldLabel>
+              <FieldLabel htmlFor="create-user-email">
+                Email <span className="text-destructive">*</span>
+              </FieldLabel>
               <Input
                 id="create-user-email"
-                name="email"
                 type="email"
-                required
+                {...form.register("email")}
               />
+              {form.formState.errors.email && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.email.message}
+                </p>
+              )}
             </Field>
             <Field>
               <FieldLabel htmlFor="create-user-password">Password</FieldLabel>
               <Input
                 id="create-user-password"
-                name="password"
                 type="password"
                 autoComplete="new-password"
+                {...form.register("password")}
               />
               <FieldDescription>
                 Leave blank for a credential-less account.
               </FieldDescription>
             </Field>
-            <Field>
-              <FieldLabel>Role</FieldLabel>
-              <Select
-                value={role}
-                onValueChange={(value) =>
-                  typeof value === "string" && setRole(value)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </FieldGroup>
-          <DialogFooter className="mt-6">
-            <DialogTrigger render={<Button type="button" variant="outline" />}>
+            <Controller
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel>Role</FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Cancel
-            </DialogTrigger>
+            </Button>
             <Button type="submit" disabled={pending}>
               {pending ? "Creating..." : "Create user"}
             </Button>
@@ -799,6 +792,8 @@ const UserActions = React.memo(function UserActions({
   );
 });
 
+type SetRoleForm = z.infer<typeof setRoleSchema>;
+
 function RoleDialog({
   user,
   open,
@@ -808,13 +803,28 @@ function RoleDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [role, setRole] = useState(roleValue(user.role));
-  const [state, formAction, pending] = useActionState(
-    setAdminUserRole,
-    undefined,
-  );
+  const [pending, setPending] = useState(false);
+  const router = useRouter();
 
-  useActionFeedback(state, () => onOpenChange(false));
+  const form = useForm<SetRoleForm>({
+    resolver: zodResolver(setRoleSchema),
+    defaultValues: { role: roleValue(user.role) as "user" | "admin" },
+  });
+
+  async function onSubmit(values: SetRoleForm) {
+    setPending(true);
+    const formData = new FormData();
+    formData.set("userId", user.id);
+    formData.set("role", values.role);
+    const result = await setAdminUserRole(undefined, formData);
+    if (result?.error) toast.error(result.error);
+    if (result?.success) {
+      toast.success(result.success);
+      onOpenChange(false);
+      router.refresh();
+    }
+    setPending(false);
+  }
 
   return (
     <Dialog
@@ -822,48 +832,53 @@ function RoleDialog({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent>
+      <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>Change role</DialogTitle>
+          <DialogTitle>Edit role</DialogTitle>
           <DialogDescription>
-            Update the platform role for {user.email}.
+            Change the platform role for{" "}
+            <span className="font-medium text-foreground">{user.email}</span>.
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction}>
-          <input type="hidden" name="userId" value={user.id} />
-          <input type="hidden" name="role" value={role} />
-          <FieldGroup>
-            <Field>
-              <FieldLabel>Role</FieldLabel>
-              <Select
-                value={role}
-                onValueChange={(value) =>
-                  typeof value === "string" && setRole(value)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </FieldGroup>
-          <DialogFooter className="mt-6">
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <p className="text-sm text-muted-foreground">
+            Current role:{" "}
+            <span className="font-medium text-foreground">
+              {roleValue(user.role)}
+            </span>
+          </p>
+          <div className="mt-4 grid gap-4">
+            <Controller
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel>New role</FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            />
+          </div>
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              disabled={pending}
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : "Save role"}
+              {pending ? "Saving..." : "Save changes"}
             </Button>
           </DialogFooter>
         </form>
@@ -881,62 +896,78 @@ function BanDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [expiresIn, setExpiresIn] = useState("");
-  const [state, formAction, pending] = useActionState(banAdminUser, undefined);
+  const [pending, setPending] = useState(false);
+  const router = useRouter();
 
-  useActionFeedback(state, () => {
-    setExpiresIn("");
-    onOpenChange(false);
+  const form = useForm({
+    defaultValues: { banReason: "", banExpiresIn: "" },
   });
+
+  async function onSubmit(values: { banReason: string; banExpiresIn: string }) {
+    setPending(true);
+    const formData = new FormData();
+    formData.set("userId", user.id);
+    formData.set("banReason", values.banReason);
+    formData.set("banExpiresIn", values.banExpiresIn);
+    const result = await banAdminUser(undefined, formData);
+    if (result?.error) toast.error(result.error);
+    if (result?.success) {
+      toast.success(result.success);
+      form.reset();
+      onOpenChange(false);
+      router.refresh();
+    }
+    setPending(false);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>Ban user</DialogTitle>
           <DialogDescription>
-            Ban {user.email} and revoke their sessions.
+            Revoke access for{" "}
+            <span className="font-medium text-foreground">{user.email}</span>{" "}
+            and invalidate their sessions.
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction}>
-          <input type="hidden" name="userId" value={user.id} />
-          <input type="hidden" name="banExpiresIn" value={expiresIn} />
-          <FieldGroup>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="grid gap-4">
             <Field>
               <FieldLabel htmlFor={`ban-reason-${user.id}`}>Reason</FieldLabel>
               <Textarea
                 id={`ban-reason-${user.id}`}
-                name="banReason"
                 placeholder="Policy violation"
+                {...form.register("banReason")}
               />
             </Field>
-            <Field>
-              <FieldLabel>Duration</FieldLabel>
-              <Select
-                value={expiresIn}
-                onValueChange={(value) =>
-                  typeof value === "string" && setExpiresIn(value)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Indefinite" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="">Indefinite</SelectItem>
-                    <SelectItem value="86400">1 day</SelectItem>
-                    <SelectItem value="604800">7 days</SelectItem>
-                    <SelectItem value="2592000">30 days</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </FieldGroup>
-          <DialogFooter className="mt-6">
+            <Controller
+              control={form.control}
+              name="banExpiresIn"
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel>Duration</FieldLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Indefinite" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="">Indefinite</SelectItem>
+                        <SelectItem value="86400">1 day</SelectItem>
+                        <SelectItem value="604800">7 days</SelectItem>
+                        <SelectItem value="2592000">30 days</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+            />
+          </div>
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              disabled={pending}
               onClick={() => onOpenChange(false)}
             >
               Cancel
@@ -948,6 +979,62 @@ function BanDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function AdminUsersTableSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-4 border-b">
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 flex-1" />
+          <Skeleton className="h-9 w-20" />
+          <Skeleton className="h-9 w-9" />
+        </div>
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-4 w-24" />
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-36" />
+            <Skeleton className="h-9 w-36" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <TableHead key={i}>
+                  <Skeleton className="h-4 w-16" />
+                </TableHead>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {[1, 2, 3, 4, 5].map((row) => (
+                <TableRow key={row}>
+                  {[1, 2, 3, 4, 5].map((col) => (
+                    <TableCell key={col}>
+                      <Skeleton
+                        className={`h-4 ${col === 1 ? "w-48" : col === 2 ? "w-36" : col === 3 ? "w-12" : col === 4 ? "w-16" : "w-8"}`}
+                      />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+      <div className="flex items-center justify-between border-t px-6 py-4">
+        <Skeleton className="h-4 w-48" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 w-20" />
+          <Skeleton className="h-9 w-20" />
+        </div>
+      </div>
+    </Card>
   );
 }
 
@@ -973,9 +1060,22 @@ function ConfirmUserActionDialog({
   submitLabel: string;
   destructive?: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(action, undefined);
+  const [pending, setPending] = useState(false);
+  const router = useRouter();
 
-  useActionFeedback(state, () => onOpenChange(false));
+  async function handleConfirm() {
+    setPending(true);
+    const formData = new FormData();
+    formData.set("userId", user.id);
+    const result = await action(undefined, formData);
+    if (result?.error) toast.error(result.error);
+    if (result?.success) {
+      toast.success(result.success);
+      onOpenChange(false);
+      router.refresh();
+    }
+    setPending(false);
+  }
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -986,16 +1086,14 @@ function ConfirmUserActionDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-          <form action={formAction}>
-            <input type="hidden" name="userId" value={user.id} />
-            <AlertDialogAction
-              type="submit"
-              disabled={pending}
-              variant={destructive ? "destructive" : "default"}
-            >
-              {pending ? "Working..." : submitLabel}
-            </AlertDialogAction>
-          </form>
+          <AlertDialogAction
+            type="button"
+            disabled={pending}
+            variant={destructive ? "destructive" : "default"}
+            onClick={handleConfirm}
+          >
+            {pending ? "Working..." : submitLabel}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
