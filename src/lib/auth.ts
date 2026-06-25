@@ -1,6 +1,7 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
+import { passkey } from "@better-auth/passkey";
 import { admin, emailOTP, organization, twoFactor } from "better-auth/plugins";
 import { headers } from "next/headers";
 import { cache } from "react";
@@ -80,6 +81,7 @@ export const auth = betterAuth({
       },
     }),
     twoFactor(),
+    passkey(),
     nextCookies(),
   ],
 });

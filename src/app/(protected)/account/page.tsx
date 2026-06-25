@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { ProfileForm } from "@/components/profile-form";
 import { ResendVerification } from "@/components/resend-verification";
+import { SecuritySettings } from "@/components/security-settings";
 import { SendResetLink } from "@/components/send-reset-link";
 import { SessionManager } from "@/components/session-manager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -77,6 +78,8 @@ export default async function AccountPage() {
       </Card>
 
       <SendResetLink email={user.email} />
+
+      <SecuritySettings />
 
       <SessionManager />
     </div>
