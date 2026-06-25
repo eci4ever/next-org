@@ -58,7 +58,7 @@ export function NavUser({
               <span className="truncate font-medium">{user.name}</span>
               <span className="truncate text-xs">{user.email}</span>
             </div>
-            <ChevronsUpDownIcon className="ml-auto size-4" aria-hidden="true" />
+            <ChevronsUpDownIcon className="ml-auto" aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-fit"

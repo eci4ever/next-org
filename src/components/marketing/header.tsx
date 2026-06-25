@@ -58,7 +58,7 @@ export function Header() {
           onClick={() => setOpen(!open)}
           aria-label={open ? "Close menu" : "Open menu"}
         >
-          {open ? <XIcon aria-hidden="true" /> : <MenuIcon aria-hidden="true" />}
+          {open ? <XIcon data-icon aria-hidden="true" /> : <MenuIcon data-icon aria-hidden="true" />}
         </Button>
       </div>
       {open && (

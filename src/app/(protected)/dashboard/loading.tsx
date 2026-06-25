@@ -5,7 +5,7 @@ export default function DashboardLoading() {
   return (
     <div className="flex flex-1 flex-col gap-6 px-6 pb-6">
       <div className="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-1">
+        <div className="min-w-0 flex flex-col gap-1">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-4 w-56" />
         </div>

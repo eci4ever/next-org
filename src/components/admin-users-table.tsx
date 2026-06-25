@@ -492,7 +492,7 @@ export function AdminUsersTable({
               Page {table.getState().pagination.pageIndex + 1} of{" "}
               {table.getPageCount()}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="icon"
@@ -501,7 +501,7 @@ export function AdminUsersTable({
                 disabled={!table.getCanPreviousPage()}
               >
                 <span className="sr-only">Go to previous page</span>
-                <ArrowDownIcon className="size-4 rotate-90" aria-hidden="true" />
+                <ArrowDownIcon data-icon className="rotate-90" aria-hidden="true" />
               </Button>
               <Button
                 variant="outline"
@@ -511,7 +511,7 @@ export function AdminUsersTable({
                 disabled={!table.getCanNextPage()}
               >
                 <span className="sr-only">Go to next page</span>
-                <ArrowDownIcon className="size-4 -rotate-90" aria-hidden="true" />
+                <ArrowDownIcon data-icon className="-rotate-90" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -661,7 +661,7 @@ const UserActions = React.memo(function UserActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
-          <MoreHorizontalIcon />
+          <MoreHorizontalIcon data-icon />
           <span className="sr-only">Open user actions</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">

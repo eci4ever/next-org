@@ -273,7 +273,7 @@ function PasskeysCard() {
                   </p>
                 </div>
                 <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(pk.id)}>
-                  <Trash2Icon className="size-4" />
+                  <Trash2Icon data-icon />
                   <span className="sr-only">Delete passkey</span>
                 </Button>
               </li>

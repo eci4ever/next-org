@@ -45,7 +45,7 @@ export function ProfileForm({
   }
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="flex flex-col gap-5">
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="name">

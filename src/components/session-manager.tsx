@@ -3,6 +3,7 @@
 import { MonitorIcon, SmartphoneIcon, TabletIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -154,9 +155,9 @@ export function SessionManager() {
                             {info.browser} on {info.os}
                           </span>
                           {isCurrent && (
-                            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                            <Badge variant="default" className="shrink-0">
                               Current
-                            </span>
+                            </Badge>
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
