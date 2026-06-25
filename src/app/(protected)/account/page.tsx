@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { ChangePasswordForm } from "@/components/change-password-form";
 import { PageHeader } from "@/components/page-header";
 import { ProfileForm } from "@/components/profile-form";
+import { SendResetLink } from "@/components/send-reset-link";
 import { SessionManager } from "@/components/session-manager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -49,17 +49,7 @@ export default async function AccountPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Change Password</CardTitle>
-          <CardDescription>
-            Update your account password. You will need your current password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChangePasswordForm />
-        </CardContent>
-      </Card>
+      <SendResetLink email={user.email} />
 
       <SessionManager />
     </div>
