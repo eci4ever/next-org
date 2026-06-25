@@ -1,7 +1,7 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { admin, emailOTP, organization } from "better-auth/plugins";
+import { admin, emailOTP, organization, twoFactor } from "better-auth/plugins";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { db } from "@/db";
@@ -24,6 +24,7 @@ function getEmailEnv() {
 }
 
 export const auth = betterAuth({
+  appName: "Nimfi",
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
@@ -78,6 +79,7 @@ export const auth = betterAuth({
         });
       },
     }),
+    twoFactor(),
     nextCookies(),
   ],
 });
