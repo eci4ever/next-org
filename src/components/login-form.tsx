@@ -30,13 +30,13 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardTitle className="text-xl">Welcome Back</CardTitle>
           <CardDescription>Sign in to your account to continue</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction}>
             {state?.error ? (
-              <p className="mb-4 text-sm text-destructive">{state.error}</p>
+              <p className="mb-4 text-sm text-destructive" role="alert">{state.error}</p>
             ) : null}
             <FieldGroup>
               <Field>
@@ -47,6 +47,7 @@ export function LoginForm({
                   type="email"
                   placeholder="m@example.com"
                   autoComplete="email"
+                  spellCheck={false}
                   required
                 />
               </Field>
@@ -56,15 +57,15 @@ export function LoginForm({
               </Field>
               <Field>
                 <Button type="submit" disabled={pending} className="w-full">
-                  {pending ? "Signing in\u2026" : "Sign in"}
+                  {pending ? "Signing In\u2026" : "Sign In"}
                 </Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account?{" "}
+                  Don\u2019t have an account?{" "}
                   <Link
                     href="/signup"
                     className="underline underline-offset-4 hover:text-foreground"
                   >
-                    Sign up
+                    Sign Up
                   </Link>
                 </FieldDescription>
               </Field>

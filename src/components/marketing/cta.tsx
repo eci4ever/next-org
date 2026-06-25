@@ -30,7 +30,7 @@ export function CTA() {
                 href="#features"
                 className="text-sm text-primary-foreground/80 underline underline-offset-4 transition-colors hover:text-primary-foreground"
               >
-                Learn more
+                Learn More
               </Link>
             </div>
           </div>

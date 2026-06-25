@@ -42,13 +42,13 @@ export function Header() {
             href="/login"
             className={buttonVariants({ variant: "ghost", size: "sm" })}
           >
-            Sign in
+            Sign In
           </Link>
           <Link
             href="/signup"
             className={buttonVariants({ variant: "default", size: "sm" })}
           >
-            Get early access
+            Get Early Access
           </Link>
         </div>
         <Button
@@ -79,13 +79,13 @@ export function Header() {
               href="/login"
               className={buttonVariants({ variant: "ghost", size: "sm", className: "w-full justify-start" })}
             >
-              Sign in
+              Sign In
             </Link>
             <Link
               href="/signup"
               className={buttonVariants({ variant: "default", size: "sm", className: "w-full" })}
             >
-              Get early access
+              Get Early Access
             </Link>
           </nav>
         </div>

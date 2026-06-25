@@ -62,7 +62,7 @@ const tiers = [
       "On-premise optional",
     ],
     cta: "Contact Sales",
-    href: "#",
+    href: "/contact",
     featured: false,
   },
 ];

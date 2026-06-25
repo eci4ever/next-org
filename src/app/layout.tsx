@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,13 +17,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Your App",
-  description: "A modern platform to manage your workflow.",
+export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#fcfcfc" },
     { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
+};
+
+export const metadata: Metadata = {
+  title: "Your App",
+  description: "A modern platform to manage your workflow.",
 };
 
 export default function RootLayout({
@@ -34,6 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={cn(
         "h-full",
         "antialiased",
@@ -44,11 +48,11 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:ring-2 focus:ring-ring focus:rounded-md">
+        <a href="#main-content" className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4 focus-visible:z-50 focus-visible:px-4 focus-visible:py-2 focus-visible:bg-background focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-md">
           Skip to content
         </a>
         <TooltipProvider>
-          <div id="main-content" className="flex flex-1 flex-col">
+          <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col">
             {children}
           </div>
           <Toaster richColors closeButton />
