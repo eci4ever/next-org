@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import type * as React from "react";
 import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
+import { OrganizationSwitcher } from "@/components/organization-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const data = {
-  teams: [
+  organizations: [
     {
       name: "Acme Inc",
       logo: <GalleryVerticalEndIcon aria-hidden="true" />,
@@ -81,7 +81,7 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <OrganizationSwitcher organizations={data.organizations} />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
