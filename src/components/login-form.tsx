@@ -52,6 +52,14 @@ export function LoginForm({
                 />
               </Field>
               <Field>
+                <div className="flex items-center justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm underline underline-offset-4 hover:text-foreground"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
                 <FieldLabel htmlFor="password">Password</FieldLabel>
                 <Input id="password" name="password" type="password" autoComplete="current-password" required />
               </Field>
