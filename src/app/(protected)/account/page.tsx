@@ -4,6 +4,7 @@ import { ProfileForm } from "@/components/profile-form";
 import { SendResetLink } from "@/components/send-reset-link";
 import { SessionManager } from "@/components/session-manager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -41,6 +42,12 @@ export default async function AccountPage() {
             <div className="flex flex-col gap-1">
               <CardTitle>{user.name}</CardTitle>
               <CardDescription>{user.email}</CardDescription>
+              <Badge
+                variant={user.role === "admin" ? "default" : "secondary"}
+                className="w-fit"
+              >
+                {user.role === "admin" ? "Admin" : "User"}
+              </Badge>
             </div>
           </div>
         </CardHeader>

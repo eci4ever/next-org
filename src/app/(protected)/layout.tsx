@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -25,7 +24,7 @@ export default async function ProtectedLayout({
     <SidebarProvider>
       <AppSidebar session={session} />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-6">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -33,13 +32,6 @@ export default async function ProtectedLayout({
               className="mr-2 data-vertical:h-4 data-vertical:self-auto"
             />
             <Breadcrumbs />
-          </div>
-          <div className="flex items-center gap-2 px-6">
-            <Badge
-              variant={session.user.role === "admin" ? "default" : "secondary"}
-            >
-              {session.user.role === "admin" ? "Admin" : "User"}
-            </Badge>
           </div>
         </header>
         {children}
