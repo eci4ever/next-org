@@ -95,7 +95,7 @@ export function SignupForm({
               </Field>
               <Field>
                 <Button type="submit" disabled={pending} className="w-full">
-                  {pending ? "Creating Account\u2026" : "Create Account"}
+                  {pending ? "Creating Account…" : "Create Account"}
                 </Button>
                 <FieldDescription className="text-center">
                   Already have an account?{" "}

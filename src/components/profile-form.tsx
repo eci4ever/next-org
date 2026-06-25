@@ -91,7 +91,7 @@ export function ProfileForm({
         </Field>
       </FieldGroup>
       <Button type="submit" disabled={pending}>
-        {pending ? "Saving\u2026" : "Save changes"}
+        {pending ? "Saving…" : "Save changes"}
       </Button>
     </form>
   );

@@ -57,7 +57,7 @@ export function LoginForm({
               </Field>
               <Field>
                 <Button type="submit" disabled={pending} className="w-full">
-                  {pending ? "Signing In\u2026" : "Sign In"}
+                  {pending ? "Signing In…" : "Sign In"}
                 </Button>
                 <FieldDescription className="text-center">
                   Don\u2019t have an account?{" "}

@@ -313,7 +313,7 @@ export function AdminUsersTable({
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by name or email\u2026"
+            placeholder="Search by name or email…"
             aria-label="Search users"
             className="h-9 pl-9 text-sm"
           />
@@ -634,7 +634,7 @@ export function CreateUserDialog() {
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating\u2026" : "Create user"}
+              {pending ? "Creating…" : "Create user"}
             </Button>
           </DialogFooter>
         </form>
@@ -830,7 +830,7 @@ function RoleDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving\u2026" : "Save changes"}
+              {pending ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
         </form>
@@ -925,7 +925,7 @@ function BanDialog({
               Cancel
             </Button>
             <Button type="submit" variant="destructive" disabled={pending}>
-              {pending ? "Banning\u2026" : "Ban user"}
+              {pending ? "Banning…" : "Ban user"}
             </Button>
           </DialogFooter>
         </form>
@@ -1033,7 +1033,7 @@ function ConfirmUserActionDialog({
             variant={destructive ? "destructive" : "default"}
             onClick={handleConfirm}
           >
-            {pending ? "Working\u2026" : submitLabel}
+            {pending ? "Working…" : submitLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
