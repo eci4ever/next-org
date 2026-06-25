@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,17 +29,14 @@ import { Input } from "@/components/ui/input";
 export function SendResetLink({ email }: { email: string }) {
   const [sent, setSent] = useState(false);
   const [resetDone, setResetDone] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [dialogError, setDialogError] = useState("");
 
   const handleSend = async () => {
-    setError("");
     setLoading(true);
 
     const { error: err } = await authClient.emailOtp.requestPasswordReset({
@@ -46,8 +44,9 @@ export function SendResetLink({ email }: { email: string }) {
     });
 
     if (err) {
-      setError(err.message ?? "Failed to send reset code");
+      toast.error(err.message ?? "Failed to send reset code");
     } else {
+      toast.success("Reset code sent. Check your email.");
       setSent(true);
     }
     setLoading(false);
@@ -55,15 +54,14 @@ export function SendResetLink({ email }: { email: string }) {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDialogError("");
 
     if (password !== confirm) {
-      setDialogError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     if (password.length < 8) {
-      setDialogError("Password must be at least 8 characters");
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -76,8 +74,9 @@ export function SendResetLink({ email }: { email: string }) {
     });
 
     if (err) {
-      setDialogError(err.message ?? "Failed to reset password");
+      toast.error(err.message ?? "Failed to reset password");
     } else {
+      toast.success("Password updated successfully.");
       setResetDone(true);
       setDialogOpen(false);
       setOtp("");
@@ -88,7 +87,6 @@ export function SendResetLink({ email }: { email: string }) {
   };
 
   const openDialog = () => {
-    setDialogError("");
     setOtp("");
     setPassword("");
     setConfirm("");
@@ -108,17 +106,7 @@ export function SendResetLink({ email }: { email: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {error ? (
-          <p className="mb-4 text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
-        {resetDone ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="size-2 rounded-full bg-emerald-500" aria-hidden="true" />
-            Password updated
-          </div>
-        ) : sent ? (
+        {resetDone ? null : sent ? (
           <Button onClick={openDialog} variant="default">
             Enter Reset Code
           </Button>
@@ -138,11 +126,6 @@ export function SendResetLink({ email }: { email: string }) {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleReset}>
-            {dialogError ? (
-              <p className="mb-4 text-sm text-destructive" role="alert">
-                {dialogError}
-              </p>
-            ) : null}
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="reset-otp">Reset Code</FieldLabel>

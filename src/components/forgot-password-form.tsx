@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +23,10 @@ import { Input } from "@/components/ui/input";
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     const { error: err } = await authClient.emailOtp.requestPasswordReset({
@@ -35,8 +34,9 @@ export function ForgotPasswordForm() {
     });
 
     if (err) {
-      setError(err.message ?? "Failed to send reset code");
+      toast.error(err.message ?? "Failed to send reset code");
     } else {
+      toast.success("Reset code sent. Check your email.");
       setSent(true);
     }
     setLoading(false);
@@ -83,11 +83,6 @@ export function ForgotPasswordForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
-            {error ? (
-              <p className="mb-4 text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            ) : null}
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>

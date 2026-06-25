@@ -6,14 +6,11 @@ import {
   ChevronsUpDownIcon,
   CreditCardIcon,
   LogOutIcon,
-  ShieldIcon,
   SparklesIcon,
-  UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "@/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,11 +35,9 @@ export function NavUser({
     name: string;
     email: string;
     image?: string | null;
-    role?: string | null;
   };
 }) {
   const { isMobile } = useSidebar();
-  const isAdmin = user.role === "admin";
 
   return (
     <SidebarMenu>
@@ -84,19 +79,6 @@ export function NavUser({
                     <span className="truncate font-medium">{user.name}</span>
                     <span className="truncate text-xs">{user.email}</span>
                   </div>
-                </div>
-                <div className="px-1 pb-1.5">
-                  <Badge
-                    variant={isAdmin ? "default" : "secondary"}
-                    className="w-fit gap-1"
-                  >
-                    {isAdmin ? (
-                      <ShieldIcon className="size-3" aria-hidden="true" />
-                    ) : (
-                      <UserIcon className="size-3" aria-hidden="true" />
-                    )}
-                    {isAdmin ? "Admin" : "User"}
-                  </Badge>
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 import { signIn } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,10 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const [state, formAction, pending] = useActionState(signIn, undefined);
 
+  useEffect(() => {
+    if (state?.error) toast.error(state.error);
+  }, [state]);
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -35,9 +40,6 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <form action={formAction}>
-            {state?.error ? (
-              <p className="mb-4 text-sm text-destructive" role="alert">{state.error}</p>
-            ) : null}
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>

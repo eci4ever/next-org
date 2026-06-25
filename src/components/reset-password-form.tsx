@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,20 +30,18 @@ export function ResetPasswordForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [done, setDone] = useState(false);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     if (password !== confirm) {
-      setError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+      toast.error("Password must be at least 8 characters");
       return;
     }
 
@@ -55,8 +54,9 @@ export function ResetPasswordForm() {
     });
 
     if (err) {
-      setError(err.message ?? "Failed to reset password");
+      toast.error(err.message ?? "Failed to reset password");
     } else {
+      toast.success("Password reset successfully.");
       setDone(true);
     }
     setLoading(false);
@@ -95,11 +95,6 @@ export function ResetPasswordForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
-            {error ? (
-              <p className="mb-4 text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            ) : null}
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
