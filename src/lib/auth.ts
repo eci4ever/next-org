@@ -30,6 +30,26 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    autoSignIn: false,
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, token }) => {
+      const env = getEmailEnv();
+      const brand = getEmailBrandName(env);
+      const baseUrl = env.APP_BASE_URL ?? "http://localhost:3000";
+      const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+
+      await sendEmail(env, {
+        to: user.email,
+        template: {
+          subject: `Verify your ${brand} email`,
+          previewText: "Confirm your email address to get started.",
+          text: `Hello ${user.name},\n\nPlease verify your email address for ${brand} by clicking the link below:\n\n${verifyUrl}\n\nIf you didn't sign up for ${brand}, please ignore this email.`,
+          html: `<p>Hello ${user.name},</p><p>Please verify your email address for ${brand} by clicking the link below:</p><p><a href="${verifyUrl}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:10px 14px;border-radius:6px">Verify Email</a></p><p>If you didn't sign up for ${brand}, please ignore this email.</p>`,
+        },
+      });
+    },
+    sendOnSignUp: true,
   },
   plugins: [
     admin(),

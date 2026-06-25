@@ -14,10 +14,16 @@ export async function signIn(_prev: unknown, formData: FormData) {
       headers: await headers(),
     });
   } catch (err) {
-    return {
-      error:
-        err instanceof Error ? err.message : "An unexpected error occurred",
-    };
+    const message =
+      err instanceof Error ? err.message : "An unexpected error occurred";
+
+    if (message.toLowerCase().includes("email not verified")) {
+      return {
+        error: "Please verify your email before signing in. Check your inbox.",
+      };
+    }
+
+    return { error: message };
   }
 
   redirect("/dashboard");
@@ -40,7 +46,7 @@ export async function signUp(_prev: unknown, formData: FormData) {
     };
   }
 
-  redirect("/dashboard");
+  redirect(`/check-email?email=${encodeURIComponent(email)}`);
 }
 
 export async function updateProfile(_prev: unknown, formData: FormData) {

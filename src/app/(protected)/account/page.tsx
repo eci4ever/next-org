@@ -1,6 +1,8 @@
+import { MailCheckIcon, MailXIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { ProfileForm } from "@/components/profile-form";
+import { ResendVerification } from "@/components/resend-verification";
 import { SendResetLink } from "@/components/send-reset-link";
 import { SessionManager } from "@/components/session-manager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,20 +41,38 @@ export default async function AccountPage() {
                 {user.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               <CardTitle>{user.name}</CardTitle>
               <CardDescription>{user.email}</CardDescription>
-              <Badge
-                variant={user.role === "admin" ? "default" : "secondary"}
-                className="w-fit"
-              >
-                {user.role === "admin" ? "Admin" : "User"}
-              </Badge>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge
+                  variant={user.role === "admin" ? "default" : "secondary"}
+                  className="w-fit"
+                >
+                  {user.role === "admin" ? "Admin" : "User"}
+                </Badge>
+                <Badge
+                  variant={user.emailVerified ? "secondary" : "destructive"}
+                  className="w-fit gap-1"
+                >
+                  {user.emailVerified ? (
+                    <MailCheckIcon className="size-3" aria-hidden="true" />
+                  ) : (
+                    <MailXIcon className="size-3" aria-hidden="true" />
+                  )}
+                  {user.emailVerified ? "Verified" : "Unverified"}
+                </Badge>
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <ProfileForm user={user} />
+          {!user.emailVerified ? (
+            <div className="mt-6">
+              <ResendVerification email={user.email} />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
