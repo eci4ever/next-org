@@ -5,9 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="mx-auto max-w-7xl px-6 pt-24 pb-16 sm:pt-32 sm:pb-20 lg:pt-40 lg:pb-24">
-        <div className="mx-auto max-w-4xl text-center">
+    <section className="px-6 pt-12 pb-16 sm:pt-20 sm:pb-24 lg:pt-20 lg:pb-28">
+      <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-xs font-medium text-muted-foreground tracking-wide">
             <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
             Early access — join 50+ Malaysian SMEs
@@ -34,7 +33,6 @@ export function Hero() {
               </Button>
             </Link>
           </div>
-        </div>
       </div>
       <div className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32">
         <Card className="overflow-hidden shadow-sm border">

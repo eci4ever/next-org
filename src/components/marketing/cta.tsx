@@ -6,7 +6,7 @@ export function CTA() {
   return (
     <section className="mt-40 @md:mt-52">
       <div className="mx-auto max-w-7xl px-6">
-        <div className="relative overflow-hidden rounded-xl bg-primary px-8 py-16 text-center text-primary-foreground sm:px-16">
+        <div className="relative overflow-hidden rounded-2xl bg-primary px-8 py-16 text-center text-primary-foreground sm:px-16">
           <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.05)_50%,transparent_75%)]" aria-hidden="true" />
           <div className="relative">
             <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary-foreground/10 ring-1 ring-inset ring-primary-foreground/20">

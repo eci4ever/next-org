@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
-import { toast } from "sonner";
+import { useActionState, useEffect, useRef } from "react";
 import { signIn } from "@/actions/auth";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,13 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -30,9 +25,12 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(signIn, undefined);
+  const errorRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    if (state?.error) toast.error(state.error);
+    if (state?.error) {
+      errorRef.current?.focus();
+    }
   }, [state]);
 
   useEffect(() => {
@@ -59,17 +57,22 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your account to continue</CardDescription>
+    <div className={cn("flex flex-col", className)} {...props}>
+      <Card className="rounded-2xl shadow-none">
+        <CardHeader className="space-y-2 text-center">
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Welcome back
+          </CardTitle>
+          <CardDescription className="text-sm">
+            Sign in to your account to continue.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form action={formAction}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+
+        <CardContent className="space-y-6">
+          <form action={formAction} className="space-y-5">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   name="email"
@@ -77,45 +80,72 @@ export function LoginForm({
                   placeholder="m@example.com"
                   autoComplete="username webauthn"
                   spellCheck={false}
+                  className="h-11"
                   required
                 />
-              </Field>
-              <Field>
-                <div className="flex items-center justify-end">
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-4">
+                  <Label htmlFor="password">Password</Label>
                   <Link
                     href="/forgot-password"
-                    className="text-sm underline underline-offset-4 hover:text-foreground"
+                    className="text-sm font-medium underline-offset-4 hover:underline"
                   >
-                    Forgot Password?
+                    Forgot password?
                   </Link>
                 </div>
-                <FieldLabel htmlFor="password">Password</FieldLabel>
-                <Input id="password" name="password" type="password" autoComplete="current-password webauthn" required />
-              </Field>
-              <Field>
-                <Button type="submit" disabled={pending} className="w-full">
-                  {pending ? "Signing In…" : "Sign In"}
-                </Button>
-              </Field>
-            </FieldGroup>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password webauthn"
+                  className="h-11"
+                  required
+                />
+              </div>
+            </div>
+
+            {state?.error && (
+              <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2">
+                <p
+                  ref={errorRef}
+                  role="alert"
+                  aria-live="polite"
+                  tabIndex={-1}
+                  className="text-sm text-destructive"
+                >
+                  {state.error}
+                </p>
+              </div>
+            )}
+
+            <Button type="submit" disabled={pending} className="h-11 w-full">
+              {pending ? "Signing in…" : "Sign in"}
+            </Button>
           </form>
-          <Separator className="my-4" />
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handlePasskeySignIn}
-          >
-            Sign In with Passkey
-          </Button>
-          <FieldDescription className="text-center mt-4">
-            Don\u2019t have an account?{" "}
-            <Link
-              href="/signup"
-              className="underline underline-offset-4 hover:text-foreground"
+
+          <div className="space-y-4">
+            <Separator />
+
+            <Button
+              variant="outline"
+              className="h-11 w-full"
+              onClick={handlePasskeySignIn}
             >
-              Sign Up
-            </Link>
-          </FieldDescription>
+              Sign in with passkey
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/signup"
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                Sign up
+              </Link>
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
