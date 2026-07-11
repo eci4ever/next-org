@@ -58,9 +58,9 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col", className)} {...props}>
-      <Card className="rounded-2xl shadow-none">
+      <Card className="shadow-none">
         <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-2xl font-semibold tracking-tight">
+          <CardTitle className="text-lg font-medium tracking-tight">
             Welcome back
           </CardTitle>
           <CardDescription className="text-sm">
@@ -68,9 +68,9 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <form action={formAction} className="space-y-5">
-            <div className="space-y-4">
+        <CardContent className="space-y-4">
+          <form action={formAction} className="space-y-4">
+            <div className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -80,7 +80,7 @@ export function LoginForm({
                   placeholder="m@example.com"
                   autoComplete="username webauthn"
                   spellCheck={false}
-                  className="h-11"
+                  className="h-9"
                   required
                 />
               </div>
@@ -100,7 +100,7 @@ export function LoginForm({
                   name="password"
                   type="password"
                   autoComplete="current-password webauthn"
-                  className="h-11"
+                  className="h-9"
                   required
                 />
               </div>
@@ -120,17 +120,17 @@ export function LoginForm({
               </div>
             )}
 
-            <Button type="submit" disabled={pending} className="h-11 w-full">
+            <Button type="submit" disabled={pending} className="h-9 w-full">
               {pending ? "Signing in…" : "Sign in"}
             </Button>
           </form>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <Separator />
 
             <Button
               variant="outline"
-              className="h-11 w-full"
+              className="h-9 w-full"
               onClick={handlePasskeySignIn}
             >
               Sign in with passkey

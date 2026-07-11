@@ -67,7 +67,7 @@ export function ResetPasswordForm() {
       <div className="flex flex-col gap-6">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Password Reset</CardTitle>
+            <CardTitle className="text-lg font-medium">Password Reset</CardTitle>
             <CardDescription>
               Your password has been reset successfully. You can now sign in
               with your new password.
@@ -87,7 +87,7 @@ export function ResetPasswordForm() {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Reset Password</CardTitle>
+          <CardTitle className="text-lg font-medium">Reset Password</CardTitle>
           <CardDescription>
             Enter the 6-digit code sent to your email and choose a new
             password.

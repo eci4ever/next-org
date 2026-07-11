@@ -94,7 +94,7 @@ export default function VerifyEmailPage() {
           fallback={
             <Card>
               <CardHeader className="text-center">
-                <CardTitle className="text-xl">Verifying Email…</CardTitle>
+                <CardTitle className="text-lg font-medium">Verifying Email…</CardTitle>
                 <CardDescription>
                   Please wait while we verify your email address.
                 </CardDescription>

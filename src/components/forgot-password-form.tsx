@@ -47,7 +47,7 @@ export function ForgotPasswordForm() {
       <div className="flex flex-col gap-6">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Check Your Email</CardTitle>
+            <CardTitle className="text-lg font-medium">Check Your Email</CardTitle>
             <CardDescription>
               We sent a 6-digit reset code to <strong>{email}</strong>. Enter
               the code on the next page to reset your password.
@@ -76,7 +76,7 @@ export function ForgotPasswordForm() {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Forgot Password</CardTitle>
+          <CardTitle className="text-lg font-medium">Forgot Password</CardTitle>
           <CardDescription>
             Enter your email address and we&apos;ll send you a reset code.
           </CardDescription>

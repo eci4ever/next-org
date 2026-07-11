@@ -58,7 +58,7 @@ export default function TwoFactorPage() {
         </Link>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Two-Factor Authentication</CardTitle>
+            <CardTitle className="text-lg font-medium">Two-Factor Authentication</CardTitle>
             <CardDescription>
               Enter the code from your authenticator app to continue.
             </CardDescription>

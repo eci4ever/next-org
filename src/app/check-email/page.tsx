@@ -42,7 +42,7 @@ function CheckEmailContent() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">Check Your Email</CardTitle>
+        <CardTitle className="text-lg font-medium">Check Your Email</CardTitle>
         <CardDescription>
           We sent a verification link to{" "}
           <strong>{email || "your email address"}</strong>. Click the link in
@@ -98,7 +98,7 @@ export default function CheckEmailPage() {
           fallback={
             <Card>
               <CardHeader className="text-center">
-                <CardTitle className="text-xl">Check Your Email</CardTitle>
+                <CardTitle className="text-lg font-medium">Check Your Email</CardTitle>
                 <CardDescription>
                   We sent a verification link to your email address.
                 </CardDescription>

@@ -30,9 +30,9 @@ export function SignupForm({
 
   return (
     <div className={cn("flex flex-col", className)} {...props}>
-      <Card className="rounded-2xl shadow-none">
+      <Card className="shadow-none">
         <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-2xl font-semibold tracking-tight">
+          <CardTitle className="text-lg font-medium tracking-tight">
             Create your account
           </CardTitle>
           <CardDescription className="text-sm">
@@ -40,8 +40,8 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <form action={formAction} className="space-y-5">
+        <CardContent className="space-y-4">
+          <form action={formAction} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>
               <Input
@@ -50,12 +50,12 @@ export function SignupForm({
                 type="text"
                 placeholder="John Doe"
                 autoComplete="name"
-                className="h-11"
+                className="h-9"
                 required
               />
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -65,7 +65,7 @@ export function SignupForm({
                   placeholder="m@example.com"
                   autoComplete="email"
                   spellCheck={false}
-                  className="h-11"
+                  className="h-9"
                   required
                 />
               </div>
@@ -78,7 +78,7 @@ export function SignupForm({
                     name="password"
                     type="password"
                     autoComplete="new-password"
-                    className="h-11"
+                    className="h-9"
                     required
                   />
                 </div>
@@ -89,7 +89,7 @@ export function SignupForm({
                     name="confirm-password"
                     type="password"
                     autoComplete="new-password"
-                    className="h-11"
+                    className="h-9"
                     required
                   />
                 </div>
@@ -114,7 +114,7 @@ export function SignupForm({
               </div>
             )}
 
-            <Button type="submit" disabled={pending} className="h-11 w-full">
+            <Button type="submit" disabled={pending} className="h-9 w-full">
               {pending ? "Creating account…" : "Create account"}
             </Button>
           </form>
