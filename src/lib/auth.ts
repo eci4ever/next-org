@@ -7,22 +7,11 @@ import { headers } from "next/headers";
 import { cache } from "react";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import { env } from "@/lib/env";
 import {
   getEmailBrandName,
   sendEmail,
 } from "@/lib/email/email.service";
-
-function getEmailEnv() {
-  return {
-    RESEND_API_KEY: process.env.RESEND_API_KEY,
-    EMAIL_FROM: process.env.EMAIL_FROM,
-    EMAIL_REPLY_TO: process.env.EMAIL_REPLY_TO,
-    EMAIL_SUPPORT: process.env.EMAIL_SUPPORT,
-    EMAIL_BRAND_NAME: process.env.EMAIL_BRAND_NAME,
-    APP_BASE_URL: process.env.APP_BASE_URL,
-    WEB_URL: process.env.WEB_URL,
-  };
-}
 
 export const auth = betterAuth({
   appName: "Nimfi",
@@ -36,7 +25,6 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, token }) => {
-      const env = getEmailEnv();
       const brand = getEmailBrandName(env);
       const baseUrl = env.APP_BASE_URL ?? "http://localhost:3000";
       const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
@@ -60,7 +48,6 @@ export const auth = betterAuth({
     }),
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
-        const env = getEmailEnv();
         const brand = getEmailBrandName(env);
         const label =
           type === "sign-in"

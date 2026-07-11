@@ -1,3 +1,5 @@
+import type { Env } from "@/lib/env";
+
 export type EmailTemplateId =
   | "organization-invitation"
   | "email-verification"
@@ -34,12 +36,13 @@ export type SendEmailResult =
   | { ok: true; providerId: string | null }
   | { ok: false; error: string };
 
-export type EmailEnv = {
-  RESEND_API_KEY?: string;
-  EMAIL_FROM?: string;
-  EMAIL_REPLY_TO?: string;
-  EMAIL_SUPPORT?: string;
-  EMAIL_BRAND_NAME?: string;
-  APP_BASE_URL?: string;
-  WEB_URL?: string;
-};
+export type EmailEnv = Pick<
+  Env,
+  | "RESEND_API_KEY"
+  | "EMAIL_FROM"
+  | "EMAIL_REPLY_TO"
+  | "EMAIL_SUPPORT"
+  | "EMAIL_BRAND_NAME"
+  | "APP_BASE_URL"
+  | "WEB_URL"
+>;
