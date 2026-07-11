@@ -25,7 +25,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Your App",
+  title: "Nimfi Next",
   description: "A modern platform to manage your workflow.",
 };
 
