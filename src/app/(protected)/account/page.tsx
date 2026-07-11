@@ -32,10 +32,10 @@ export default async function AccountPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-4">
-            <Avatar className="size-16">
+          <div className="flex items-center gap-3">
+            <Avatar className="size-12">
               <AvatarImage src={user.image ?? ""} alt={user.name} />
-              <AvatarFallback className="text-lg">
+              <AvatarFallback className="text-base">
                 {user.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
