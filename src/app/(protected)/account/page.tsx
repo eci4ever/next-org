@@ -16,14 +16,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getSession } from "@/lib/auth";
+import { requireSession } from "@/lib/session";
 
 export default async function AccountPage() {
-  const session = await getSession();
-
-  if (!session) {
-    redirect("/login");
-  }
+  const session = await requireSession();
 
   const { user } = session;
 

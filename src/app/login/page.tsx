@@ -2,10 +2,10 @@ import { GalleryVerticalEnd } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/login-form";
-import { getSession } from "@/lib/auth";
+import { getSessionOrNull } from "@/lib/session";
 
 export default async function LoginPage() {
-  const session = await getSession();
+  const session = await getSessionOrNull();
 
   if (session) {
     redirect("/dashboard");

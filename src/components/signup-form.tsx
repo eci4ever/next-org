@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useRef, useEffect } from "react";
-import { signUp } from "@/actions/auth";
+import { signUp } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import {
   Card,

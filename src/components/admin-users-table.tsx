@@ -41,7 +41,7 @@ import {
   removeAdminUser,
   setAdminUserRole,
   unbanAdminUser,
-} from "@/actions/admin-users";
+} from "@/lib/session";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -352,7 +352,7 @@ export function AdminUsersTable({
               columnFilters.find((f) => f.id === "role")
                 ? "all"
                 : ((columnFilters.find((f) => f.id === "banned")
-                    ?.value as string) ?? "all")
+                  ?.value as string) ?? "all")
             }
             onValueChange={(value) =>
               typeof value === "string" &&
@@ -403,9 +403,9 @@ export function AdminUsersTable({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
                   </TableHead>
                 ))}
               </TableRow>

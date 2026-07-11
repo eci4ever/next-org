@@ -1,7 +1,6 @@
 import { ShieldAlertIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import type { AdminUserRow } from "@/components/admin-users-table";
 import { AdminUsersTableSkeleton } from "@/components/admin-users-table";
 import { PageHeader } from "@/components/page-header";
@@ -13,7 +12,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { auth, getSession } from "@/lib/auth";
+import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/session";
 
 const AdminUsersTable = dynamic(
   () =>
@@ -63,15 +63,7 @@ function serializeUser(user: {
 
 export default async function AdminUsersPage() {
   const requestHeaders = await headers();
-  const session = await getSession();
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "admin") {
-    redirect("/dashboard");
-  }
+  const session = await requireAdmin();
 
   let usersResult: { users: ReturnType<typeof serializeUser>[]; total: number };
   let fetchError = false;
@@ -91,7 +83,7 @@ export default async function AdminUsersPage() {
 
   if (fetchError) {
     return (
-    <div className="flex flex-1 flex-col gap-6 px-6 pb-6">
+      <div className="flex flex-1 flex-col gap-6 px-6 pb-6">
         <PageHeader
           title="Users"
           description="Manage platform users, roles, bans, and impersonation."

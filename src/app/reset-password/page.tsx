@@ -3,10 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ResetPasswordForm } from "@/components/reset-password-form";
-import { getSession } from "@/lib/auth";
+import { getSessionOrNull } from "@/lib/session";
 
 export default async function ResetPasswordPage() {
-  const session = await getSession();
+  const session = await getSessionOrNull();
 
   if (session) {
     redirect("/dashboard");

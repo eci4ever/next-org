@@ -5,6 +5,167 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth, getSession } from "@/lib/auth";
 
+export type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
+
+// ---------------------------------------------------------------------------
+// Session helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Get the current session or null.
+ * Cached per-request via React `cache()` in `getSession`.
+ */
+export async function getSessionOrNull(): Promise<Session | null> {
+  return getSession();
+}
+
+/**
+ * Get the current session, or redirect to /login if unauthenticated.
+ * Use this in protected pages and layouts.
+ */
+export async function requireSession(): Promise<Session> {
+  const session = await getSession();
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  return session;
+}
+
+/**
+ * Get the current session and verify the user is an admin.
+ * Redirects to /dashboard if not an admin.
+ * Use this in admin-only server actions and pages.
+ */
+export async function requireAdmin(): Promise<Session> {
+  const session = await requireSession();
+
+  if (session.user.role !== "admin") {
+    redirect("/dashboard");
+  }
+
+  return session;
+}
+
+/**
+ * Check if the current user is an admin.
+ */
+export async function isAdmin(): Promise<boolean> {
+  const session = await getSession();
+  return session?.user.role === "admin";
+}
+
+// ---------------------------------------------------------------------------
+// Auth actions (sign in, sign up, sign out, profile, password)
+// ---------------------------------------------------------------------------
+
+export async function signIn(_prev: unknown, formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  try {
+    await auth.api.signInEmail({
+      body: { email, password },
+      headers: await headers(),
+    });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "An unexpected error occurred";
+
+    if (message.toLowerCase().includes("email not verified")) {
+      return {
+        error: "Please verify your email before signing in. Check your inbox.",
+      };
+    }
+
+    return { error: message };
+  }
+
+  redirect("/dashboard");
+}
+
+export async function signUp(_prev: unknown, formData: FormData) {
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  try {
+    await auth.api.signUpEmail({
+      body: { name, email, password },
+      headers: await headers(),
+    });
+  } catch (err) {
+    return {
+      error:
+        err instanceof Error ? err.message : "An unexpected error occurred",
+    };
+  }
+
+  redirect(`/check-email?email=${encodeURIComponent(email)}`);
+}
+
+export async function signOut() {
+  await auth.api.signOut({
+    headers: await headers(),
+  });
+
+  redirect("/");
+}
+
+export async function updateProfile(_prev: unknown, formData: FormData) {
+  await requireSession();
+
+  const name = formData.get("name") as string;
+  const image = formData.get("image") as string;
+
+  try {
+    await auth.api.updateUser({
+      body: { name, image: image || null },
+      headers: await headers(),
+    });
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Failed to update profile",
+    };
+  }
+
+  return { success: true };
+}
+
+export async function changePassword(_prev: unknown, formData: FormData) {
+  await requireSession();
+
+  const currentPassword = formData.get("currentPassword") as string;
+  const newPassword = formData.get("newPassword") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (newPassword !== confirmPassword) {
+    return { error: "Passwords do not match" };
+  }
+
+  try {
+    await auth.api.changePassword({
+      body: {
+        currentPassword,
+        newPassword,
+        revokeOtherSessions: false,
+      },
+      headers: await headers(),
+    });
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Failed to change password",
+    };
+  }
+
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Admin user actions
+// ---------------------------------------------------------------------------
+
 export type AdminUserActionState =
   | {
       error?: string;
@@ -12,24 +173,7 @@ export type AdminUserActionState =
     }
   | undefined;
 
-type AdminSession = {
-  user: {
-    id: string;
-    role?: string | null;
-  };
-};
-
 const USERS_PATH = "/admin/users";
-
-async function requireAdmin(): Promise<AdminSession> {
-  const session = await getSession();
-
-  if (!session || session.user.role !== "admin") {
-    throw new Error("You are not allowed to manage users.");
-  }
-
-  return session;
-}
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);

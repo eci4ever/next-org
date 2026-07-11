@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { updateProfile } from "@/actions/auth";
+import { updateProfile } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import {
   Field,
