@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-3">
         <Link href="/" className="text-base font-semibold tracking-tight">
           Nimfi
         </Link>
