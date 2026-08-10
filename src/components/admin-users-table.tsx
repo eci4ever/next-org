@@ -4,13 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   type ColumnDef,
   type ColumnFiltersState,
+  columnFilteringFeature,
+  columnVisibilityFeature,
+  createFilteredRowModel,
+  createPaginatedRowModel,
+  createSortedRowModel,
   flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
+  globalFilteringFeature,
+  rowPaginationFeature,
+  rowSortingFeature,
   type SortingState,
-  useReactTable,
+  tableFeatures,
+  useTable,
 } from "@tanstack/react-table";
 import {
   ArrowDownIcon,
@@ -32,16 +37,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
-import {
-  type AdminUserActionState,
-  banAdminUser,
-  createAdminUser,
-  impersonateAdminUser,
-  removeAdminUser,
-  setAdminUserRole,
-  unbanAdminUser,
-} from "@/lib/session";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,7 +50,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
 import {
   Dialog,
   DialogContent,
@@ -74,7 +68,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -95,6 +88,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  type AdminUserActionState,
+  banAdminUser,
+  createAdminUser,
+  impersonateAdminUser,
+  removeAdminUser,
+  setAdminUserRole,
+  unbanAdminUser,
+} from "@/lib/session";
 
 export type AdminUserRow = {
   id: string;
@@ -125,6 +127,17 @@ const setRoleSchema = z.object({
 });
 
 const pageSizeOptions = ["10", "20", "50"];
+
+const adminTableFeatures = tableFeatures({
+  columnFilteringFeature,
+  globalFilteringFeature,
+  rowSortingFeature,
+  rowPaginationFeature,
+  columnVisibilityFeature,
+  filteredRowModel: createFilteredRowModel(),
+  sortedRowModel: createSortedRowModel(),
+  paginatedRowModel: createPaginatedRowModel(),
+});
 
 const globalFilterFn = (
   row: { original: AdminUserRow },
@@ -216,7 +229,7 @@ export function AdminUsersTable({
 
   const hasActiveFilters = globalFilter !== "" || columnFilters.length > 0;
 
-  const columns = useMemo<ColumnDef<AdminUserRow>[]>(
+  const columns = useMemo<ColumnDef<typeof adminTableFeatures, AdminUserRow>[]>(
     () => [
       {
         accessorKey: "name",
@@ -282,7 +295,8 @@ export function AdminUsersTable({
     [currentUserId],
   );
 
-  const table = useReactTable({
+  const table = useTable({
+    features: adminTableFeatures,
     data: users,
     columns,
     state: {
@@ -296,20 +310,19 @@ export function AdminUsersTable({
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     globalFilterFn,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    initialState: { pagination: { pageSize: 10 } },
+    initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
   });
 
-  const pageSize = table.getState().pagination.pageSize;
+  const pageSize = table.state.pagination.pageSize;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative flex-1 md:max-w-xs">
-          <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <SearchIcon
+            className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -352,7 +365,7 @@ export function AdminUsersTable({
               columnFilters.find((f) => f.id === "role")
                 ? "all"
                 : ((columnFilters.find((f) => f.id === "banned")
-                  ?.value as string) ?? "all")
+                    ?.value as string) ?? "all")
             }
             onValueChange={(value) =>
               typeof value === "string" &&
@@ -403,9 +416,9 @@ export function AdminUsersTable({
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -414,9 +427,7 @@ export function AdminUsersTable({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -489,7 +500,7 @@ export function AdminUsersTable({
               </Select>
             </div>
             <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              Page {table.state.pagination.pageIndex + 1} of{" "}
               {table.getPageCount()}
             </div>
             <div className="flex items-center gap-2">
@@ -501,7 +512,11 @@ export function AdminUsersTable({
                 disabled={!table.getCanPreviousPage()}
               >
                 <span className="sr-only">Go to previous page</span>
-                <ArrowDownIcon data-icon className="rotate-90" aria-hidden="true" />
+                <ArrowDownIcon
+                  data-icon
+                  className="rotate-90"
+                  aria-hidden="true"
+                />
               </Button>
               <Button
                 variant="outline"
@@ -511,7 +526,11 @@ export function AdminUsersTable({
                 disabled={!table.getCanNextPage()}
               >
                 <span className="sr-only">Go to next page</span>
-                <ArrowDownIcon data-icon className="-rotate-90" aria-hidden="true" />
+                <ArrowDownIcon
+                  data-icon
+                  className="-rotate-90"
+                  aria-hidden="true"
+                />
               </Button>
             </div>
           </div>
