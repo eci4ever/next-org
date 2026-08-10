@@ -26,8 +26,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Nimfi Next",
-  description: "A modern platform to manage your workflow.",
+  title: "System Status",
+  description: "Live server and database health monitoring.",
 };
 
 export default function RootLayout({
@@ -49,7 +49,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <a href="#main-content" className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4 focus-visible:z-50 focus-visible:px-4 focus-visible:py-2 focus-visible:bg-background focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-md">
+        <a
+          href="#main-content"
+          className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4 focus-visible:z-50 focus-visible:px-4 focus-visible:py-2 focus-visible:bg-background focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:rounded-md"
+        >
           Skip to content
         </a>
         <ThemeProvider
@@ -59,7 +62,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>
-            <div id="main-content" tabIndex={-1} className="flex flex-1 flex-col">
+            <div
+              id="main-content"
+              tabIndex={-1}
+              className="flex flex-1 flex-col"
+            >
               {children}
             </div>
             <Toaster richColors closeButton />
