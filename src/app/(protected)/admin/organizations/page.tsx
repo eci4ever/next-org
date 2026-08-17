@@ -4,11 +4,11 @@ import {
   CreateOrganizationDialog,
   OrganizationLogo,
 } from "@/components/admin-organizations";
+import { DebouncedSearchInput } from "@/components/debounced-search-input";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -77,7 +77,7 @@ export default async function AdminOrganizationsPage({
         className="flex flex-col gap-2 sm:flex-row"
         action="/admin/organizations"
       >
-        <Input
+        <DebouncedSearchInput
           name="query"
           defaultValue={query}
           placeholder="Search by name or slug…"
@@ -86,6 +86,7 @@ export default async function AdminOrganizationsPage({
         <NativeSelect
           name="status"
           defaultValue={status}
+          autoSubmit
           aria-label="Filter by status"
         >
           <NativeSelectOption value="all">All statuses</NativeSelectOption>
@@ -93,9 +94,6 @@ export default async function AdminOrganizationsPage({
           <NativeSelectOption value="suspended">Suspended</NativeSelectOption>
           <NativeSelectOption value="archived">Archived</NativeSelectOption>
         </NativeSelect>
-        <Button type="submit" variant="outline" size="sm">
-          Apply filters
-        </Button>
         {query || status !== "all" ? (
           <Button
             render={<Link href="/admin/organizations" />}

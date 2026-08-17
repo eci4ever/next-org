@@ -41,6 +41,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { DebouncedSearchInput } from "@/components/debounced-search-input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -364,7 +365,7 @@ export function AdminUsersTable({
     <div className="flex flex-col gap-4">
       {serverPagination ? (
         <form action="/admin/users" className="flex flex-col gap-2 sm:flex-row">
-          <Input
+          <DebouncedSearchInput
             name="query"
             defaultValue={serverPagination.query}
             placeholder="Search by name or email…"
@@ -373,6 +374,7 @@ export function AdminUsersTable({
           <NativeSelect
             name="role"
             defaultValue={serverPagination.role}
+            autoSubmit
             aria-label="Filter by platform role"
           >
             <NativeSelectOption value="all">All roles</NativeSelectOption>
@@ -382,15 +384,13 @@ export function AdminUsersTable({
           <NativeSelect
             name="status"
             defaultValue={serverPagination.status}
+            autoSubmit
             aria-label="Filter by account status"
           >
             <NativeSelectOption value="all">All statuses</NativeSelectOption>
             <NativeSelectOption value="active">Active</NativeSelectOption>
             <NativeSelectOption value="banned">Banned</NativeSelectOption>
           </NativeSelect>
-          <Button type="submit" variant="outline" size="sm">
-            Apply filters
-          </Button>
           {serverPagination.query ||
           serverPagination.role !== "all" ||
           serverPagination.status !== "all" ? (
