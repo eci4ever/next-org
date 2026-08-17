@@ -1,12 +1,10 @@
 import { MailCheckIcon, MailXIcon } from "lucide-react";
-import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { ProfileForm } from "@/components/profile-form";
 import { ResendVerification } from "@/components/resend-verification";
 import { SecuritySettings } from "@/components/security-settings";
 import { SendResetLink } from "@/components/send-reset-link";
 import { SessionManager } from "@/components/session-manager";
-import { DangerZone } from "@/components/danger-zone";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -79,8 +77,6 @@ export default async function AccountPage() {
       <SecuritySettings />
 
       <SessionManager />
-
-      <DangerZone />
     </div>
   );
 }

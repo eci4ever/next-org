@@ -1,10 +1,8 @@
 "use client";
 
-import { Trash2Icon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import QRCode from "react-qr-code";
-import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,20 +12,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 
 export function SecuritySettings() {
-  return (
-    <div className="flex flex-col gap-6">
-      <TwoFactorCard />
-      <PasskeysCard />
-    </div>
-  );
+  return <TwoFactorCard />;
 }
 
 function TwoFactorCard() {
@@ -35,7 +25,9 @@ function TwoFactorCard() {
   const user = session?.user;
   const twoFactorEnabled = user?.twoFactorEnabled ?? false;
 
-  const [step, setStep] = useState<"idle" | "setup" | "verify" | "disable">("idle");
+  const [step, setStep] = useState<"idle" | "setup" | "verify" | "disable">(
+    "idle",
+  );
   const [password, setPassword] = useState("");
   const [totpUri, setTotpUri] = useState("");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
@@ -104,7 +96,9 @@ function TwoFactorCard() {
         {step === "verify" ? (
           <div className="flex flex-col gap-6">
             <div className="flex flex-col items-center gap-4 rounded-md border p-6">
-              <p className="text-sm font-medium">Scan with your authenticator app</p>
+              <p className="text-sm font-medium">
+                Scan with your authenticator app
+              </p>
               {totpUri ? (
                 <div className="rounded-md bg-white p-4">
                   <QRCode value={totpUri} size={180} />
@@ -117,8 +111,11 @@ function TwoFactorCard() {
                   Backup Codes — Save These
                 </p>
                 <div className="grid grid-cols-2 gap-1">
-                  {backupCodes.map((code, i) => (
-                    <code key={i} className="rounded bg-muted px-2 py-1 text-xs font-mono">
+                  {backupCodes.map((code) => (
+                    <code
+                      key={code}
+                      className="rounded bg-muted px-2 py-1 text-xs font-mono"
+                    >
                       {code}
                     </code>
                   ))}
@@ -128,7 +125,9 @@ function TwoFactorCard() {
             <form onSubmit={handleVerify}>
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="verify-code">Enter Code to Confirm</FieldLabel>
+                  <FieldLabel htmlFor="verify-code">
+                    Enter Code to Confirm
+                  </FieldLabel>
                   <Input
                     id="verify-code"
                     type="text"
@@ -174,7 +173,9 @@ function TwoFactorCard() {
           <form onSubmit={handleDisable}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="disable-password">Confirm Password</FieldLabel>
+                <FieldLabel htmlFor="disable-password">
+                  Confirm Password
+                </FieldLabel>
                 <Input
                   id="disable-password"
                   type="password"
@@ -198,7 +199,11 @@ function TwoFactorCard() {
               <span className="font-medium text-foreground">enabled</span>.
             </p>
             <div>
-              <Button variant="destructive" size="sm" onClick={() => setStep("disable")}>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setStep("disable")}
+              >
                 Disable 2FA
               </Button>
             </div>
@@ -210,90 +215,6 @@ function TwoFactorCard() {
           <Button onClick={() => setStep("setup")}>Enable 2FA</Button>
         </CardFooter>
       ) : null}
-    </Card>
-  );
-}
-
-function PasskeysCard() {
-  const [passkeys, setPasskeys] = useState<Array<{ id: string; name?: string | null; createdAt?: Date | null; deviceType: string }>>([]);
-  const [adding, setAdding] = useState(false);
-  const [addName, setAddName] = useState("");
-
-  const fetchPasskeys = useCallback(async () => {
-    const { data } = await authClient.passkey.listUserPasskeys({});
-    if (data) setPasskeys(data as typeof passkeys);
-  }, []);
-
-  useEffect(() => {
-    fetchPasskeys();
-  }, [fetchPasskeys]);
-
-  const handleAdd = async () => {
-    setAdding(true);
-    const { error } = await authClient.passkey.addPasskey({
-      name: addName || undefined,
-    });
-    if (error) {
-      toast.error(error.message ?? "Failed to add passkey");
-    } else {
-      toast.success("Passkey registered successfully.");
-      setAddName("");
-      await fetchPasskeys();
-    }
-    setAdding(false);
-  };
-
-  const handleDelete = async (id: string) => {
-    const { error } = await authClient.passkey.deletePasskey({ id });
-    if (error) {
-      toast.error(error.message ?? "Failed to delete passkey");
-    } else {
-      toast.success("Passkey deleted.");
-      await fetchPasskeys();
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Passkeys</CardTitle>
-        <CardDescription>
-          Sign in securely using biometrics or a security key.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {passkeys.length > 0 ? (
-          <ul className="divide-y divide-border rounded-md border" role="list">
-            {passkeys.map((pk) => (
-              <li key={pk.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium">{pk.name || pk.deviceType || "Passkey"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {pk.createdAt ? new Date(pk.createdAt).toLocaleDateString() : ""}
-                  </p>
-                </div>
-                <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(pk.id)}>
-                  <Trash2Icon data-icon />
-                  <span className="sr-only">Delete passkey</span>
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">No passkeys registered yet.</p>
-        )}
-      </CardContent>
-      <CardFooter className="flex items-end gap-2">
-        <Input
-          placeholder="Passkey name (optional)"
-          value={addName}
-          onChange={(e) => setAddName(e.target.value)}
-          className="max-w-xs"
-        />
-        <Button onClick={handleAdd} disabled={adding}>
-          {adding ? "Adding…" : "Add Passkey"}
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

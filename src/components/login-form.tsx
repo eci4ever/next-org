@@ -1,11 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef } from "react";
-import { signIn } from "@/lib/session";
-import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,14 +12,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { signIn } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const router = useRouter();
   const [state, formAction, pending] = useActionState(signIn, undefined);
   const errorRef = useRef<HTMLParagraphElement>(null);
 
@@ -32,29 +27,6 @@ export function LoginForm({
       errorRef.current?.focus();
     }
   }, [state]);
-
-  useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      PublicKeyCredential &&
-      typeof PublicKeyCredential.isConditionalMediationAvailable === "function"
-    ) {
-      PublicKeyCredential.isConditionalMediationAvailable().then((available) => {
-        if (available) {
-          void authClient.signIn.passkey({ autoFill: true });
-        }
-      });
-    }
-  }, []);
-
-  const handlePasskeySignIn = async () => {
-    const { error } = await authClient.signIn.passkey();
-    if (error) {
-      toast.error(error.message ?? "Passkey sign-in failed");
-    } else {
-      router.push("/dashboard");
-    }
-  };
 
   return (
     <div className={cn("flex flex-col", className)} {...props}>
@@ -78,7 +50,7 @@ export function LoginForm({
                   name="email"
                   type="email"
                   placeholder="m@example.com"
-                  autoComplete="username webauthn"
+                  autoComplete="username"
                   spellCheck={false}
                   className="h-9"
                   required
@@ -99,7 +71,7 @@ export function LoginForm({
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete="current-password webauthn"
+                  autoComplete="current-password"
                   className="h-9"
                   required
                 />
@@ -126,16 +98,6 @@ export function LoginForm({
           </form>
 
           <div className="space-y-3">
-            <Separator />
-
-            <Button
-              variant="outline"
-              className="h-9 w-full"
-              onClick={handlePasskeySignIn}
-            >
-              Sign in with passkey
-            </Button>
-
             <p className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
               <Link

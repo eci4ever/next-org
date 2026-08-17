@@ -1,17 +1,13 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { passkey } from "@better-auth/passkey";
 import { admin, emailOTP, organization, twoFactor } from "better-auth/plugins";
 import { headers } from "next/headers";
 import { cache } from "react";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
+import { getEmailBrandName, sendEmail } from "@/lib/email/email.service";
 import { env } from "@/lib/env";
-import {
-  getEmailBrandName,
-  sendEmail,
-} from "@/lib/email/email.service";
 
 export const auth = betterAuth({
   appName: "Nimfi",
@@ -68,7 +64,6 @@ export const auth = betterAuth({
       },
     }),
     twoFactor(),
-    passkey(),
     nextCookies(),
   ],
 });
