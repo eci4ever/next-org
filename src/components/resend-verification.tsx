@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 export function ResendVerification({ email }: { email: string }) {
   const [loading, setLoading] = useState(false);
@@ -25,20 +26,21 @@ export function ResendVerification({ email }: { email: string }) {
   };
 
   return (
-    <div className="flex items-center gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3">
-      <p className="flex-1 text-sm text-muted-foreground">
+    <Alert variant="destructive">
+      <AlertDescription>
         Your email is not yet verified. Verify your email to enable all
         features.
-      </p>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleResend}
-        disabled={loading}
-        className="shrink-0"
-      >
-        {loading ? "Sending…" : "Resend Email"}
-      </Button>
-    </div>
+      </AlertDescription>
+      <AlertAction>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleResend}
+          disabled={loading}
+        >
+          {loading ? "Sending…" : "Resend Email"}
+        </Button>
+      </AlertAction>
+    </Alert>
   );
 }

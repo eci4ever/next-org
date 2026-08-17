@@ -7,6 +7,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import {
   type AdminActionState,
   addAdminOrganizationMember,
   addAdminTeamMember,
@@ -109,17 +113,21 @@ export function OrganizationStatusForm({
   return (
     <form action={formAction} className="flex flex-col gap-3">
       <input type="hidden" name="organizationId" value={organizationId} />
-      <label className="grid gap-1.5 text-sm font-medium">
+      <label
+        htmlFor="admin-organization-status"
+        className="grid gap-1.5 text-sm font-medium"
+      >
         New status
-        <select
+        <NativeSelect
+          id="admin-organization-status"
           name="status"
           defaultValue={currentStatus === "active" ? "suspended" : "active"}
-          className="h-9 rounded-md border bg-background px-3 font-normal"
+          className="w-full font-normal"
         >
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-          <option value="archived">Archived</option>
-        </select>
+          <NativeSelectOption value="active">Active</NativeSelectOption>
+          <NativeSelectOption value="suspended">Suspended</NativeSelectOption>
+          <NativeSelectOption value="archived">Archived</NativeSelectOption>
+        </NativeSelect>
       </label>
       <label
         htmlFor="admin-organization-status-reason"
@@ -155,15 +163,15 @@ export function AddOrganizationMemberForm({
         placeholder="Existing user email"
         required
       />
-      <select
+      <NativeSelect
         name="role"
         defaultValue="member"
-        className="h-9 rounded-md border bg-background px-3 text-sm"
+        aria-label="Membership role"
       >
-        <option value="member">Member</option>
-        <option value="admin">Admin</option>
-        <option value="owner">Owner</option>
-      </select>
+        <NativeSelectOption value="member">Member</NativeSelectOption>
+        <NativeSelectOption value="admin">Admin</NativeSelectOption>
+        <NativeSelectOption value="owner">Owner</NativeSelectOption>
+      </NativeSelect>
       <Button type="submit" size="sm" disabled={pending}>
         {pending ? "Adding…" : "Add member"}
       </Button>
@@ -188,16 +196,16 @@ export function OrganizationMemberActions({
       <form action={update.formAction} className="flex items-center gap-2">
         <input type="hidden" name="organizationId" value={organizationId} />
         <input type="hidden" name="memberId" value={memberId} />
-        <select
+        <NativeSelect
           name="role"
           defaultValue={role}
-          className="h-8 rounded-md border bg-background px-2 text-xs"
+          size="sm"
           aria-label="Membership role"
         >
-          <option value="member">Member</option>
-          <option value="admin">Admin</option>
-          <option value="owner">Owner</option>
-        </select>
+          <NativeSelectOption value="member">Member</NativeSelectOption>
+          <NativeSelectOption value="admin">Admin</NativeSelectOption>
+          <NativeSelectOption value="owner">Owner</NativeSelectOption>
+        </NativeSelect>
         <Button
           type="submit"
           variant="outline"
@@ -339,15 +347,15 @@ export function InviteOrganizationMemberForm({
     <form action={formAction} className="flex flex-col gap-2 sm:flex-row">
       <input type="hidden" name="organizationId" value={organizationId} />
       <Input name="email" type="email" placeholder="Email address" required />
-      <select
+      <NativeSelect
         name="role"
         defaultValue="member"
-        className="h-9 rounded-md border bg-background px-3 text-sm"
+        aria-label="Invitation role"
       >
-        <option value="member">Member</option>
-        <option value="admin">Admin</option>
-        <option value="owner">Owner</option>
-      </select>
+        <NativeSelectOption value="member">Member</NativeSelectOption>
+        <NativeSelectOption value="admin">Admin</NativeSelectOption>
+        <NativeSelectOption value="owner">Owner</NativeSelectOption>
+      </NativeSelect>
       <Button type="submit" size="sm" disabled={pending}>
         {pending ? "Sending…" : "Send invitation"}
       </Button>

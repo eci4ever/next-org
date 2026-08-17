@@ -10,6 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -79,17 +83,16 @@ export default async function AdminOrganizationsPage({
           placeholder="Search by name or slug…"
           className="sm:max-w-xs"
         />
-        <select
+        <NativeSelect
           name="status"
           defaultValue={status}
-          className="h-9 rounded-md border bg-background px-3 text-sm"
           aria-label="Filter by status"
         >
-          <option value="all">All statuses</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-          <option value="archived">Archived</option>
-        </select>
+          <NativeSelectOption value="all">All statuses</NativeSelectOption>
+          <NativeSelectOption value="active">Active</NativeSelectOption>
+          <NativeSelectOption value="suspended">Suspended</NativeSelectOption>
+          <NativeSelectOption value="archived">Archived</NativeSelectOption>
+        </NativeSelect>
         <Button type="submit" variant="outline" size="sm">
           Apply filters
         </Button>

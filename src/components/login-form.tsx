@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,7 +21,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [state, formAction, pending] = useActionState(signIn, undefined);
-  const errorRef = useRef<HTMLParagraphElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (state?.error) {
@@ -79,17 +80,15 @@ export function LoginForm({
             </div>
 
             {state?.error && (
-              <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2">
-                <p
+              <Alert variant="destructive">
+                <AlertDescription
                   ref={errorRef}
-                  role="alert"
                   aria-live="polite"
                   tabIndex={-1}
-                  className="text-sm text-destructive"
                 >
                   {state.error}
-                </p>
-              </div>
+                </AlertDescription>
+              </Alert>
             )}
 
             <Button type="submit" disabled={pending} className="h-9 w-full">

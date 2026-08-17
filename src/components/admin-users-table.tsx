@@ -75,6 +75,10 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -366,26 +370,24 @@ export function AdminUsersTable({
             placeholder="Search by name or email…"
             className="sm:max-w-xs"
           />
-          <select
+          <NativeSelect
             name="role"
             defaultValue={serverPagination.role}
-            className="h-9 rounded-md border bg-background px-3 text-sm"
             aria-label="Filter by platform role"
           >
-            <option value="all">All roles</option>
-            <option value="admin">Admins</option>
-            <option value="user">Users</option>
-          </select>
-          <select
+            <NativeSelectOption value="all">All roles</NativeSelectOption>
+            <NativeSelectOption value="admin">Admins</NativeSelectOption>
+            <NativeSelectOption value="user">Users</NativeSelectOption>
+          </NativeSelect>
+          <NativeSelect
             name="status"
             defaultValue={serverPagination.status}
-            className="h-9 rounded-md border bg-background px-3 text-sm"
             aria-label="Filter by account status"
           >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="banned">Banned</option>
-          </select>
+            <NativeSelectOption value="all">All statuses</NativeSelectOption>
+            <NativeSelectOption value="active">Active</NativeSelectOption>
+            <NativeSelectOption value="banned">Banned</NativeSelectOption>
+          </NativeSelect>
           <Button type="submit" variant="outline" size="sm">
             Apply filters
           </Button>
