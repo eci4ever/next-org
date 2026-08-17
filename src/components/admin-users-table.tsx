@@ -14,6 +14,8 @@ import {
   rowPaginationFeature,
   rowSortingFeature,
   type SortingState,
+  sortFn_alphanumeric,
+  sortFn_text,
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
@@ -136,6 +138,10 @@ const adminTableFeatures = tableFeatures({
   columnVisibilityFeature,
   filteredRowModel: createFilteredRowModel(),
   sortedRowModel: createSortedRowModel(),
+  sortFns: {
+    alphanumeric: sortFn_alphanumeric,
+    text: sortFn_text,
+  },
   paginatedRowModel: createPaginatedRowModel(),
 });
 
