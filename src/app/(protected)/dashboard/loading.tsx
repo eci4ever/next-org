@@ -10,14 +10,23 @@ export default function DashboardLoading() {
           <Skeleton className="h-4 w-48" />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid gap-4 lg:grid-cols-2">
+        {[1, 2].map((i) => (
           <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-20" />
+            <CardHeader className="border-b">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-56" />
             </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16" />
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              {[1, 2, 3, 4].map((row) => (
+                <div key={row} className="flex items-center gap-3">
+                  <Skeleton className="size-9 shrink-0 rounded-md" />
+                  <div className="flex flex-1 flex-col gap-1.5">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-4 w-28" />
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
         ))}
