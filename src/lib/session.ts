@@ -1,8 +1,11 @@
 "use server";
 
+import { and, desc, eq, gt, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { db } from "@/db";
+import { session as sessionTable } from "@/db/schema";
 import { auth, getSession } from "@/lib/auth";
 
 export type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
@@ -54,6 +57,80 @@ export async function requireAdmin(): Promise<Session> {
 export async function isAdmin(): Promise<boolean> {
   const session = await getSession();
   return session?.user.role === "admin";
+}
+
+export type ManagedSession = {
+  id: string;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+};
+
+export async function listManagedSessions() {
+  const current = await requireSession();
+  const sessions = await db
+    .select({
+      id: sessionTable.id,
+      expiresAt: sessionTable.expiresAt,
+      createdAt: sessionTable.createdAt,
+      updatedAt: sessionTable.updatedAt,
+      ipAddress: sessionTable.ipAddress,
+      userAgent: sessionTable.userAgent,
+    })
+    .from(sessionTable)
+    .where(
+      and(
+        eq(sessionTable.userId, current.user.id),
+        gt(sessionTable.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(desc(sessionTable.updatedAt));
+
+  return {
+    currentSessionId: current.session.id,
+    sessions: sessions.map((session) => ({
+      ...session,
+      expiresAt: session.expiresAt.toISOString(),
+      createdAt: session.createdAt.toISOString(),
+      updatedAt: session.updatedAt.toISOString(),
+    })),
+  };
+}
+
+export async function revokeManagedSession(sessionId: string) {
+  const current = await requireSession();
+
+  if (!sessionId || sessionId === current.session.id) {
+    return { error: "The current session cannot be revoked here." };
+  }
+
+  await db
+    .delete(sessionTable)
+    .where(
+      and(
+        eq(sessionTable.id, sessionId),
+        eq(sessionTable.userId, current.user.id),
+      ),
+    );
+
+  return { success: true };
+}
+
+export async function revokeOtherManagedSessions() {
+  const current = await requireSession();
+
+  await db
+    .delete(sessionTable)
+    .where(
+      and(
+        eq(sessionTable.userId, current.user.id),
+        ne(sessionTable.id, current.session.id),
+      ),
+    );
+
+  return { success: true };
 }
 
 // ---------------------------------------------------------------------------

@@ -38,48 +38,69 @@ function TwoFactorCard() {
   const handleEnable = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { data, error } = await authClient.twoFactor.enable({
-      password: password || undefined,
-    });
-    if (error) {
-      toast.error(error.message ?? "Failed to enable 2FA");
-    } else if (data) {
-      setTotpUri(data.totpURI ?? "");
+    try {
+      const { data, error } = await authClient.twoFactor.enable({ password });
+      if (error) {
+        toast.error(error.message ?? "Failed to enable 2FA");
+        return;
+      }
+      if (!data?.totpURI) {
+        toast.error("The authenticator setup could not be created.");
+        return;
+      }
+
+      setTotpUri(data.totpURI);
       setBackupCodes(data.backupCodes ?? []);
+      setVerifyCode("");
       setStep("verify");
+      setPassword("");
+    } catch {
+      toast.error("Failed to enable 2FA. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    setPassword("");
   };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await authClient.twoFactor.verifyTotp({
-      code: verifyCode,
-    });
-    if (error) {
-      toast.error(error.message ?? "Invalid code");
-    } else {
+    try {
+      const { error } = await authClient.twoFactor.verifyTotp({
+        code: verifyCode.trim(),
+      });
+      if (error) {
+        toast.error(error.message ?? "Invalid code");
+        return;
+      }
+
       toast.success("Two-factor authentication enabled.");
       window.location.reload();
+    } catch {
+      toast.error("Failed to verify the code. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDisable = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await authClient.twoFactor.disable({
-      password: disablePassword || undefined,
-    });
-    if (error) {
-      toast.error(error.message ?? "Failed to disable 2FA");
-    } else {
+    try {
+      const { error } = await authClient.twoFactor.disable({
+        password: disablePassword,
+      });
+      if (error) {
+        toast.error(error.message ?? "Failed to disable 2FA");
+        return;
+      }
+
       toast.success("Two-factor authentication disabled.");
       window.location.reload();
+    } catch {
+      toast.error("Failed to disable 2FA. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

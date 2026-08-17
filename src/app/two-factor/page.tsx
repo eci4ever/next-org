@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,12 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
 
 export default function TwoFactorPage() {
   const router = useRouter();
@@ -32,25 +28,37 @@ export default function TwoFactorPage() {
     setError("");
     setLoading(true);
 
-    const { error: err } = await authClient.twoFactor.verifyTotp({
-      code,
-      trustDevice: false,
-    });
+    try {
+      const { error: err } = await authClient.twoFactor.verifyTotp({
+        code: code.trim(),
+        trustDevice: false,
+      });
 
-    if (err) {
-      setError(err.message ?? "Invalid code");
-      toast.error(err.message ?? "Invalid verification code");
-    } else {
+      if (err) {
+        setError(err.message ?? "Invalid code");
+        toast.error(err.message ?? "Invalid verification code");
+        return;
+      }
+
       toast.success("Verified successfully.");
-      router.push("/dashboard");
+      router.replace("/dashboard");
+      router.refresh();
+    } catch {
+      const message = "Could not verify the code. Please try again.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link href="/" className="flex items-center gap-2 self-center font-medium">
+        <Link
+          href="/"
+          className="flex items-center gap-2 self-center font-medium"
+        >
           <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <GalleryVerticalEnd className="size-4" />
           </div>
@@ -58,7 +66,9 @@ export default function TwoFactorPage() {
         </Link>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-lg font-medium">Two-Factor Authentication</CardTitle>
+            <CardTitle className="text-lg font-medium">
+              Two-Factor Authentication
+            </CardTitle>
             <CardDescription>
               Enter the code from your authenticator app to continue.
             </CardDescription>

@@ -1,8 +1,8 @@
 "use client";
 
 import { MonitorIcon, SmartphoneIcon, TabletIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,60 +12,66 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  listManagedSessions,
+  type ManagedSession,
+  revokeManagedSession,
+  revokeOtherManagedSessions,
+} from "@/lib/session";
 
-interface SessionData {
-  id: string;
-  token: string;
-  userId: string;
-  expiresAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  ipAddress?: string | null;
-  userAgent?: string | null;
-}
+type SessionData = ManagedSession;
 
 function parseUserAgent(ua: string | null | undefined) {
-  if (!ua) return { browser: "Unknown", os: "Unknown", device: "desktop" as const };
+  if (!ua)
+    return { browser: "Unknown", os: "Unknown", device: "desktop" as const };
 
-  const browser = ua.includes("Firefox")
-    ? "Firefox"
-    : ua.includes("Edg")
-      ? "Edge"
-      : ua.includes("Chrome")
+  const browser = ua.includes("Edg")
+    ? "Edge"
+    : ua.includes("Firefox") || ua.includes("FxiOS")
+      ? "Firefox"
+      : ua.includes("Chrome") || ua.includes("CriOS")
         ? "Chrome"
         : ua.includes("Safari")
           ? "Safari"
           : "Unknown";
 
-  const os = ua.includes("Windows")
-    ? "Windows"
-    : ua.includes("Mac")
-      ? "macOS"
-      : ua.includes("Linux")
-        ? "Linux"
-        : ua.includes("Android")
-          ? "Android"
-          : ua.includes("iPhone") || ua.includes("iPad")
-            ? "iOS"
-            : "Unknown";
+  const os =
+    ua.includes("iPhone") || ua.includes("iPad")
+      ? "iOS"
+      : ua.includes("Android")
+        ? "Android"
+        : ua.includes("Windows")
+          ? "Windows"
+          : ua.includes("Mac")
+            ? "macOS"
+            : ua.includes("Linux")
+              ? "Linux"
+              : "Unknown";
 
-  const device = ua.includes("Mobi")
-    ? "mobile"
-    : ua.includes("Tablet") || ua.includes("iPad")
+  const device =
+    ua.includes("Tablet") || ua.includes("iPad")
       ? "tablet"
-      : "desktop";
+      : ua.includes("Mobi") || ua.includes("Android") || ua.includes("iPhone")
+        ? "mobile"
+        : "desktop";
 
   return { browser, os, device: device as "desktop" | "mobile" | "tablet" };
 }
 
-const DeviceIcon = ({ device }: { device: "desktop" | "mobile" | "tablet" }) => {
+const DeviceIcon = ({
+  device,
+}: {
+  device: "desktop" | "mobile" | "tablet";
+}) => {
   const className = "size-4 shrink-0 text-muted-foreground";
-  if (device === "mobile") return <SmartphoneIcon className={className} aria-hidden="true" />;
-  if (device === "tablet") return <TabletIcon className={className} aria-hidden="true" />;
+  if (device === "mobile")
+    return <SmartphoneIcon className={className} aria-hidden="true" />;
+  if (device === "tablet")
+    return <TabletIcon className={className} aria-hidden="true" />;
   return <MonitorIcon className={className} aria-hidden="true" />;
 };
 
-function formatDate(date: Date) {
+function formatDate(date: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
@@ -77,38 +83,65 @@ function formatDate(date: Date) {
 
 export function SessionManager() {
   const [sessions, setSessions] = useState<SessionData[]>([]);
-  const [currentToken, setCurrentToken] = useState<string>("");
+  const [currentSessionId, setCurrentSessionId] = useState("");
   const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     setLoading(true);
-    const current = await authClient.getSession();
-    setCurrentToken(current.data?.session?.token ?? "");
+    setError(null);
 
-    const list = await authClient.listSessions();
-    if (list.data) {
-      setSessions(list.data as SessionData[]);
+    try {
+      const result = await listManagedSessions();
+      setCurrentSessionId(result.currentSessionId);
+      setSessions(result.sessions);
+    } catch (cause) {
+      setSessions([]);
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Unable to load your active sessions.",
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchSessions();
   }, []);
 
-  const handleRevoke = async (token: string) => {
-    setRevoking(token);
-    await authClient.revokeSession({ token });
-    await fetchSessions();
-    setRevoking(null);
+  useEffect(() => {
+    void fetchSessions();
+  }, [fetchSessions]);
+
+  const handleRevoke = async (sessionId: string) => {
+    setRevoking(sessionId);
+    try {
+      const result = await revokeManagedSession(sessionId);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success("Session signed out.");
+      await fetchSessions();
+    } catch {
+      toast.error("Failed to sign out this session. Please try again.");
+    } finally {
+      setRevoking(null);
+    }
   };
 
   const handleRevokeOthers = async () => {
     setRevoking("others");
-    await authClient.revokeOtherSessions();
-    await fetchSessions();
-    setRevoking(null);
+    try {
+      await revokeOtherManagedSessions();
+
+      toast.success("Other sessions signed out.");
+      await fetchSessions();
+    } catch {
+      toast.error("Failed to sign out other sessions. Please try again.");
+    } finally {
+      setRevoking(null);
+    }
   };
 
   return (
@@ -123,6 +156,22 @@ export function SessionManager() {
       <CardContent>
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading sessions…</p>
+        ) : error ? (
+          <div className="flex flex-col items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4">
+            <div>
+              <p className="text-sm font-medium text-destructive">
+                Could not load sessions
+              </p>
+              <p className="text-sm text-muted-foreground">{error}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={fetchSessions}>
+              Try Again
+            </Button>
+          </div>
+        ) : sessions.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No active sessions found.
+          </p>
         ) : (
           <div className="flex flex-col gap-4">
             {sessions.length > 1 && (
@@ -133,14 +182,16 @@ export function SessionManager() {
                   onClick={handleRevokeOthers}
                   disabled={revoking === "others"}
                 >
-                  {revoking === "others" ? "Signing Out…" : "Sign Out All Other Sessions"}
+                  {revoking === "others"
+                    ? "Signing Out…"
+                    : "Sign Out All Other Sessions"}
                 </Button>
               </div>
             )}
-            <ul className="divide-y divide-border rounded-md border" role="list">
+            <ul className="divide-y divide-border rounded-md border">
               {sessions.map((s) => {
                 const info = parseUserAgent(s.userAgent);
-                const isCurrent = s.token === currentToken;
+                const isCurrent = s.id === currentSessionId;
 
                 return (
                   <li
@@ -161,7 +212,8 @@ export function SessionManager() {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
-                          {s.ipAddress ?? "Unknown IP"} &middot; Active since {formatDate(s.createdAt)}
+                          {s.ipAddress ?? "Unknown IP"} &middot; Active since{" "}
+                          {formatDate(s.createdAt)}
                         </p>
                       </div>
                     </div>
@@ -169,11 +221,11 @@ export function SessionManager() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRevoke(s.token)}
-                        disabled={revoking === s.token}
+                        onClick={() => handleRevoke(s.id)}
+                        disabled={revoking === s.id}
                         className="shrink-0"
                       >
-                        {revoking === s.token ? "Signing Out…" : "Sign Out"}
+                        {revoking === s.id ? "Signing Out…" : "Sign Out"}
                       </Button>
                     )}
                   </li>
