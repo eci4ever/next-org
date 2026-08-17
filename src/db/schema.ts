@@ -97,8 +97,20 @@ export const organization = pgTable(
     logo: text("logo"),
     createdAt: timestamp("created_at").notNull(),
     metadata: text("metadata"),
+    status: text("status").default("active").notNull(),
+    statusReason: text("status_reason"),
+    suspendedAt: timestamp("suspended_at"),
+    archivedAt: timestamp("archived_at"),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
   },
-  (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)],
+  (table) => [
+    uniqueIndex("organization_slug_uidx").on(table.slug),
+    index("organization_status_idx").on(table.status),
+    index("organization_name_idx").on(table.name),
+  ],
 );
 
 export const team = pgTable(
@@ -132,6 +144,7 @@ export const teamMember = pgTable(
   (table) => [
     index("teamMember_teamId_idx").on(table.teamId),
     index("teamMember_userId_idx").on(table.userId),
+    uniqueIndex("teamMember_teamId_userId_uidx").on(table.teamId, table.userId),
   ],
 );
 
@@ -151,6 +164,10 @@ export const member = pgTable(
   (table) => [
     index("member_organizationId_idx").on(table.organizationId),
     index("member_userId_idx").on(table.userId),
+    uniqueIndex("member_organizationId_userId_uidx").on(
+      table.organizationId,
+      table.userId,
+    ),
   ],
 );
 
@@ -194,6 +211,26 @@ export const twoFactor = pgTable(
   ],
 );
 
+export const auditLog = pgTable(
+  "platform_audit_log",
+  {
+    id: text("id").primaryKey(),
+    actorId: text("actor_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    action: text("action").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    metadata: text("metadata"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("platformAuditLog_actorId_idx").on(table.actorId),
+    index("platformAuditLog_entity_idx").on(table.entityType, table.entityId),
+    index("platformAuditLog_createdAt_idx").on(table.createdAt),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -201,6 +238,7 @@ export const userRelations = relations(user, ({ many }) => ({
   members: many(member),
   invitations: many(invitation),
   twoFactors: many(twoFactor),
+  auditLogs: many(auditLog),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -267,6 +305,13 @@ export const invitationRelations = relations(invitation, ({ one }) => ({
 export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
   user: one(user, {
     fields: [twoFactor.userId],
+    references: [user.id],
+  }),
+}));
+
+export const auditLogRelations = relations(auditLog, ({ one }) => ({
+  actor: one(user, {
+    fields: [auditLog.actorId],
     references: [user.id],
   }),
 }));

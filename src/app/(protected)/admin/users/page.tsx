@@ -1,6 +1,5 @@
 import { ShieldAlertIcon } from "lucide-react";
 import dynamic from "next/dynamic";
-import { headers } from "next/headers";
 import type { AdminUserRow } from "@/components/admin-users-table";
 import { AdminUsersTableSkeleton } from "@/components/admin-users-table";
 import { PageHeader } from "@/components/page-header";
@@ -12,7 +11,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { auth } from "@/lib/auth";
+import { getAdminUsers } from "@/lib/admin-data";
 import { requireAdmin } from "@/lib/session";
 
 const AdminUsersTable = dynamic(
@@ -31,57 +30,32 @@ const CreateUserDialog = dynamic(() =>
   })),
 );
 
-function serializeDate(value: unknown) {
-  if (!value) return null;
-  if (value instanceof Date) return value.toISOString();
-  return new Date(String(value)).toISOString();
-}
-
-function serializeUser(user: {
-  id: string;
-  name: string;
-  email: string;
-  image?: string | null;
-  role?: string | null;
-  banned?: boolean | null;
-  banReason?: string | null;
-  banExpires?: Date | string | null;
-  createdAt?: Date | string | null;
-}): AdminUserRow {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    image: user.image ?? null,
-    role: user.role ?? null,
-    banned: user.banned === true,
-    banReason: user.banReason ?? null,
-    banExpires: serializeDate(user.banExpires),
-    createdAt: serializeDate(user.createdAt),
-  };
-}
-
-export default async function AdminUsersPage() {
-  const requestHeaders = await headers();
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
   const session = await requireAdmin();
+  const query = typeof params.query === "string" ? params.query : "";
+  const role =
+    params.role === "admin" || params.role === "user" ? params.role : "all";
+  const status =
+    params.status === "active" || params.status === "banned"
+      ? params.status
+      : "all";
+  const page = typeof params.page === "string" ? Number(params.page) : 1;
 
-  let usersResult: { users: ReturnType<typeof serializeUser>[]; total: number };
+  let usersResult: Awaited<ReturnType<typeof getAdminUsers>> | undefined;
   let fetchError = false;
 
   try {
-    const result = await auth.api.listUsers({
-      query: { limit: 1000, sortBy: "createdAt", sortDirection: "desc" },
-      headers: requestHeaders,
-    });
-    usersResult = {
-      users: result.users.map(serializeUser),
-      total: result.total,
-    };
+    usersResult = await getAdminUsers({ query, role, status, page });
   } catch {
     fetchError = true;
   }
 
-  if (fetchError) {
+  if (fetchError || !usersResult) {
     return (
       <div className="flex flex-1 flex-col gap-6 px-6 pb-6">
         <PageHeader
@@ -107,7 +81,12 @@ export default async function AdminUsersPage() {
     );
   }
 
-  const { users: serializedUsers, total } = usersResult!;
+  const {
+    users: serializedUsers,
+    total,
+    page: currentPage,
+    pageCount,
+  } = usersResult;
 
   return (
     <div className="flex flex-1 flex-col gap-6 px-6 pb-6">
@@ -118,8 +97,16 @@ export default async function AdminUsersPage() {
         <CreateUserDialog />
       </PageHeader>
       <AdminUsersTable
-        users={serializedUsers}
+        users={serializedUsers as AdminUserRow[]}
         currentUserId={session.user.id}
+        serverPagination={{
+          page: currentPage,
+          pageCount,
+          total,
+          query,
+          role,
+          status,
+        }}
       />
     </div>
   );

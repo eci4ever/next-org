@@ -1,14 +1,15 @@
 "use client";
 
-import { ChevronsUpDownIcon, PlusIcon } from "lucide-react";
+import { Building2Icon, ChevronsUpDownIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import * as React from "react";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -18,21 +19,73 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { switchActiveOrganization } from "@/lib/session";
 
 export function OrganizationSwitcher({
   organizations,
+  activeOrganizationId,
 }: {
   organizations: {
+    id: string;
     name: string;
-    logo: React.ReactNode;
-    plan: string;
+    logo: string | null;
+    role: string;
   }[];
+  activeOrganizationId?: string | null;
 }) {
   const { isMobile } = useSidebar();
-  const [activeOrg, setActiveOrg] = React.useState(organizations[0]);
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+  const activeOrg =
+    organizations.find(
+      (organization) => organization.id === activeOrganizationId,
+    ) ?? organizations[0];
   if (!activeOrg) {
-    return null;
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" disabled>
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-accent">
+              <Building2Icon className="size-4" />
+            </div>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-medium">No organization</span>
+              <span className="truncate text-xs">Awaiting membership</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
   }
+
+  function switchOrganization(organizationId: string) {
+    if (organizationId === activeOrg?.id) return;
+    startTransition(async () => {
+      const result = await switchActiveOrganization(organizationId);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  const Logo = ({
+    organization,
+  }: {
+    organization: (typeof organizations)[number];
+  }) =>
+    organization.logo ? (
+      // biome-ignore lint/performance/noImgElement: Organization logos may be external.
+      <img
+        src={organization.logo}
+        alt=""
+        className="size-full rounded-md object-cover"
+      />
+    ) : (
+      <Building2Icon className="size-4" aria-hidden="true" />
+    );
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -41,16 +94,19 @@ export function OrganizationSwitcher({
             render={
               <SidebarMenuButton
                 size="lg"
+                disabled={pending}
                 className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
               />
             }
           >
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              {activeOrg.logo}
+              <Logo organization={activeOrg} />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">{activeOrg.name}</span>
-              <span className="truncate text-xs">{activeOrg.plan}</span>
+              <span className="truncate text-xs capitalize">
+                {activeOrg.role}
+              </span>
             </div>
             <ChevronsUpDownIcon className="ml-auto" aria-hidden="true" />
           </DropdownMenuTrigger>
@@ -66,28 +122,17 @@ export function OrganizationSwitcher({
               </DropdownMenuLabel>
               {organizations.map((org, index) => (
                 <DropdownMenuItem
-                  key={org.name}
-                  onClick={() => setActiveOrg(org)}
+                  key={org.id}
+                  onClick={() => switchOrganization(org.id)}
                   className="gap-2 p-2"
                 >
                   <div className="flex size-6 items-center justify-center rounded-md border">
-                    {org.logo}
+                    <Logo organization={org} />
                   </div>
                   {org.name}
                   <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
                 </DropdownMenuItem>
               ))}
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2 p-2">
-                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                  <PlusIcon className="size-4" aria-hidden="true" />
-                </div>
-                <div className="font-medium text-muted-foreground">
-                  Add organization
-                </div>
-              </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>

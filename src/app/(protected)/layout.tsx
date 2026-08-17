@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
+import { and, eq, ne } from "drizzle-orm";
 import { AppSidebar } from "@/components/app-sidebar";
-import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -9,6 +9,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { db } from "@/db";
+import { member, organization } from "@/db/schema";
 import { requireSession } from "@/lib/session";
 
 export default async function ProtectedLayout({
@@ -17,10 +19,25 @@ export default async function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const session = await requireSession();
+  const organizations = await db
+    .select({
+      id: organization.id,
+      name: organization.name,
+      logo: organization.logo,
+      role: member.role,
+    })
+    .from(member)
+    .innerJoin(organization, eq(organization.id, member.organizationId))
+    .where(
+      and(
+        eq(member.userId, session.user.id),
+        ne(organization.status, "archived"),
+      ),
+    );
 
   return (
     <SidebarProvider>
-      <AppSidebar session={session} />
+      <AppSidebar session={session} organizations={organizations} />
       <SidebarInset>
         {session.session.impersonatedBy ? (
           <ImpersonationBanner userName={session.user.name} />

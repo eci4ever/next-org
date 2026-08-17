@@ -24,6 +24,7 @@ import {
   ArrowUpDownIcon,
   ArrowUpIcon,
   BanIcon,
+  EyeIcon,
   MoreHorizontalIcon,
   PlusIcon,
   RotateCcwIcon,
@@ -33,6 +34,7 @@ import {
   UserRoundIcon,
   XIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -115,6 +117,14 @@ export type AdminUserRow = {
 type AdminUsersTableProps = {
   users: AdminUserRow[];
   currentUserId: string;
+  serverPagination?: {
+    page: number;
+    pageCount: number;
+    total: number;
+    query: string;
+    role: "admin" | "user" | "all";
+    status: "active" | "banned" | "all";
+  };
 };
 
 const createUserSchema = z.object({
@@ -216,6 +226,7 @@ const SortHeader = React.memo(function SortHeader({
 export function AdminUsersTable({
   users,
   currentUserId,
+  serverPagination,
 }: AdminUsersTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -233,7 +244,13 @@ export function AdminUsersTable({
     debounceTimer.current = setTimeout(() => setGlobalFilter(searchInput), 300);
   }, [searchInput]);
 
-  const hasActiveFilters = globalFilter !== "" || columnFilters.length > 0;
+  const hasActiveFilters = serverPagination
+    ? Boolean(
+        serverPagination.query ||
+          serverPagination.role !== "all" ||
+          serverPagination.status !== "all",
+      )
+    : globalFilter !== "" || columnFilters.length > 0;
 
   const columns = useMemo<ColumnDef<typeof adminTableFeatures, AdminUserRow>[]>(
     () => [
@@ -316,14 +333,83 @@ export function AdminUsersTable({
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     globalFilterFn,
-    initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: serverPagination ? Math.max(users.length, 1) : 10,
+      },
+    },
   });
 
   const pageSize = table.state.pagination.pageSize;
 
+  function serverPageHref(page: number) {
+    if (!serverPagination) return "/admin/users";
+    const params = new URLSearchParams();
+    if (serverPagination.query) params.set("query", serverPagination.query);
+    if (serverPagination.role !== "all")
+      params.set("role", serverPagination.role);
+    if (serverPagination.status !== "all")
+      params.set("status", serverPagination.status);
+    if (page > 1) params.set("page", String(page));
+    const suffix = params.toString();
+    return `/admin/users${suffix ? `?${suffix}` : ""}`;
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      {serverPagination ? (
+        <form action="/admin/users" className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            name="query"
+            defaultValue={serverPagination.query}
+            placeholder="Search by name or email…"
+            className="sm:max-w-xs"
+          />
+          <select
+            name="role"
+            defaultValue={serverPagination.role}
+            className="h-9 rounded-md border bg-background px-3 text-sm"
+            aria-label="Filter by platform role"
+          >
+            <option value="all">All roles</option>
+            <option value="admin">Admins</option>
+            <option value="user">Users</option>
+          </select>
+          <select
+            name="status"
+            defaultValue={serverPagination.status}
+            className="h-9 rounded-md border bg-background px-3 text-sm"
+            aria-label="Filter by account status"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="banned">Banned</option>
+          </select>
+          <Button type="submit" variant="outline" size="sm">
+            Apply filters
+          </Button>
+          {serverPagination.query ||
+          serverPagination.role !== "all" ||
+          serverPagination.status !== "all" ? (
+            <Button
+              render={<Link href="/admin/users" />}
+              nativeButton={false}
+              variant="ghost"
+              size="sm"
+            >
+              Reset
+            </Button>
+          ) : null}
+        </form>
+      ) : null}
+      <div
+        className={
+          serverPagination
+            ? "hidden"
+            : "flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        }
+      >
         <div className="relative flex-1 md:max-w-xs">
           <SearchIcon
             className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -457,12 +543,22 @@ export function AdminUsersTable({
                       </p>
                       <Button
                         type="button"
+                        nativeButton={!serverPagination}
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setGlobalFilter("");
-                          setColumnFilters([]);
-                        }}
+                        render={
+                          serverPagination ? (
+                            <Link href="/admin/users" />
+                          ) : undefined
+                        }
+                        onClick={
+                          serverPagination
+                            ? undefined
+                            : () => {
+                                setGlobalFilter("");
+                                setColumnFilters([]);
+                              }
+                        }
                       >
                         <XIcon data-icon="inline-start" aria-hidden="true" />
                         Clear filters
@@ -482,64 +578,98 @@ export function AdminUsersTable({
       {users.length ? (
         <div className="flex items-center justify-between px-2">
           <div className="flex-1 text-sm text-muted-foreground">
-            {table.getFilteredRowModel().rows.length} row(s) total.
+            {serverPagination?.total ?? table.getFilteredRowModel().rows.length}{" "}
+            row(s) total.
           </div>
-          <div className="flex items-center gap-6 lg:gap-8">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium">Rows per page</p>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(value) =>
-                  typeof value === "string" && table.setPageSize(Number(value))
+          {serverPagination ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium">
+                Page {serverPagination.page} of {serverPagination.pageCount}
+              </span>
+              <Button
+                render={
+                  <Link href={serverPageHref(serverPagination.page - 1)} />
                 }
-              >
-                <SelectTrigger className="h-8 w-[70px]">
-                  <SelectValue placeholder={String(pageSize)} />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {pageSizeOptions.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-              Page {table.state.pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
+                nativeButton={false}
                 variant="outline"
-                size="icon"
-                className="size-8"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
+                size="icon-sm"
+                disabled={serverPagination.page <= 1}
               >
-                <span className="sr-only">Go to previous page</span>
-                <ArrowDownIcon
-                  data-icon
-                  className="rotate-90"
-                  aria-hidden="true"
-                />
+                <ArrowDownIcon className="rotate-90" />
+                <span className="sr-only">Previous page</span>
               </Button>
               <Button
+                render={
+                  <Link href={serverPageHref(serverPagination.page + 1)} />
+                }
+                nativeButton={false}
                 variant="outline"
-                size="icon"
-                className="size-8"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
+                size="icon-sm"
+                disabled={serverPagination.page >= serverPagination.pageCount}
               >
-                <span className="sr-only">Go to next page</span>
-                <ArrowDownIcon
-                  data-icon
-                  className="-rotate-90"
-                  aria-hidden="true"
-                />
+                <ArrowDownIcon className="-rotate-90" />
+                <span className="sr-only">Next page</span>
               </Button>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-6 lg:gap-8">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium">Rows per page</p>
+                <Select
+                  value={String(pageSize)}
+                  onValueChange={(value) =>
+                    typeof value === "string" &&
+                    table.setPageSize(Number(value))
+                  }
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue placeholder={String(pageSize)} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {pageSizeOptions.map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                Page {table.state.pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  <span className="sr-only">Go to previous page</span>
+                  <ArrowDownIcon
+                    data-icon
+                    className="rotate-90"
+                    aria-hidden="true"
+                  />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-8"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  <span className="sr-only">Go to next page</span>
+                  <ArrowDownIcon
+                    data-icon
+                    className="-rotate-90"
+                    aria-hidden="true"
+                  />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
     </div>
@@ -692,6 +822,12 @@ const UserActions = React.memo(function UserActions({
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuGroup>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem
+              render={<Link href={`/admin/users/${user.id}`} />}
+            >
+              <EyeIcon aria-hidden="true" />
+              View details
+            </DropdownMenuItem>
             <DropdownMenuItem
               disabled={isCurrentUser}
               onClick={() => !isCurrentUser && setRoleOpen(true)}

@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  BadgeCheckIcon,
-  BellIcon,
-  ChevronsUpDownIcon,
-  CreditCardIcon,
-  LogOutIcon,
-  SparklesIcon,
-} from "lucide-react";
+import { BadgeCheckIcon, ChevronsUpDownIcon, LogOutIcon } from "lucide-react";
 import Link from "next/link";
-import { signOut } from "@/lib/session";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -26,6 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { signOut } from "@/lib/session";
 
 export function NavUser({
   user,
@@ -85,22 +78,9 @@ export function NavUser({
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <SparklesIcon aria-hidden="true" />
-              Upgrade to Pro
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem render={<Link href="/account" />}>
               <BadgeCheckIcon aria-hidden="true" />
               Account
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <CreditCardIcon aria-hidden="true" />
-              Billing
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <BellIcon aria-hidden="true" />
-              Notifications
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

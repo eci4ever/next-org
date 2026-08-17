@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  AudioLinesIcon,
-  Building2Icon,
-  GalleryVerticalEndIcon,
-  LayoutDashboardIcon,
-  TerminalIcon,
-  UsersIcon,
-} from "lucide-react";
+import { Building2Icon, LayoutDashboardIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import type * as React from "react";
 import { NavUser } from "@/components/nav-user";
@@ -26,23 +19,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const data = {
-  organizations: [
-    {
-      name: "Acme Inc",
-      logo: <GalleryVerticalEndIcon aria-hidden="true" />,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: <AudioLinesIcon aria-hidden="true" />,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: <TerminalIcon aria-hidden="true" />,
-      plan: "Free",
-    },
-  ],
   main: [
     {
       title: "Dashboard",
@@ -57,8 +33,8 @@ const data = {
       icon: <UsersIcon aria-hidden="true" />,
     },
     {
-      title: "Organization",
-      url: "/admin/organization",
+      title: "Organizations",
+      url: "/admin/organizations",
       icon: <Building2Icon aria-hidden="true" />,
     },
   ],
@@ -66,6 +42,7 @@ const data = {
 
 export function AppSidebar({
   session,
+  organizations,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
   session: {
@@ -76,12 +53,22 @@ export function AppSidebar({
       image?: string | null;
       role?: string | null;
     };
+    session: { activeOrganizationId?: string | null };
   };
+  organizations: {
+    id: string;
+    name: string;
+    logo: string | null;
+    role: string;
+  }[];
 }) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <OrganizationSwitcher organizations={data.organizations} />
+        <OrganizationSwitcher
+          organizations={organizations}
+          activeOrganizationId={session.session.activeOrganizationId}
+        />
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

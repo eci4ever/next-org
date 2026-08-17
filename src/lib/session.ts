@@ -1,11 +1,18 @@
 "use server";
 
-import { and, desc, eq, gt, ne } from "drizzle-orm";
+import { and, count, desc, eq, gt, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { session as sessionTable } from "@/db/schema";
+import {
+  auditLog,
+  member,
+  organization,
+  session as sessionTable,
+  user,
+} from "@/db/schema";
+import { platformAdminMutationError } from "@/lib/admin-policy";
 import { auth, getSession } from "@/lib/auth";
 
 export type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
@@ -57,6 +64,75 @@ export async function requireAdmin(): Promise<Session> {
 export async function isAdmin(): Promise<boolean> {
   const session = await getSession();
   return session?.user.role === "admin";
+}
+
+export async function switchActiveOrganization(organizationId: string) {
+  const current = await requireSession();
+  const membership = await db
+    .select({ id: member.id })
+    .from(member)
+    .innerJoin(organization, eq(organization.id, member.organizationId))
+    .where(
+      and(
+        eq(member.userId, current.user.id),
+        eq(member.organizationId, organizationId),
+        ne(organization.status, "archived"),
+      ),
+    )
+    .limit(1);
+
+  if (!membership.length) return { error: "Organization is not available." };
+
+  try {
+    await auth.api.setActiveOrganization({
+      body: { organizationId },
+      headers: await headers(),
+    });
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to switch organization.",
+    };
+  }
+}
+
+export async function acceptOrganizationInvitation(formData: FormData) {
+  await requireSession();
+  const invitationId = readString(formData, "invitationId");
+  if (!invitationId) return { error: "Invitation is required." };
+
+  try {
+    await auth.api.acceptInvitation({
+      body: { invitationId },
+      headers: await headers(),
+    });
+    revalidatePath("/", "layout");
+  } catch (error) {
+    return { error: errorMessage(error, "Failed to accept invitation.") };
+  }
+
+  redirect("/dashboard");
+}
+
+export async function rejectOrganizationInvitation(formData: FormData) {
+  await requireSession();
+  const invitationId = readString(formData, "invitationId");
+  if (!invitationId) return { error: "Invitation is required." };
+
+  try {
+    await auth.api.rejectInvitation({
+      body: { invitationId },
+      headers: await headers(),
+    });
+  } catch (error) {
+    return { error: errorMessage(error, "Failed to reject invitation.") };
+  }
+
+  redirect("/dashboard");
 }
 
 export type ManagedSession = {
@@ -266,6 +342,34 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
+async function isFinalPlatformAdmin(userId: string) {
+  const [target, totals] = await Promise.all([
+    db
+      .select({ role: user.role })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1),
+    db.select({ total: count() }).from(user).where(eq(user.role, "admin")),
+  ]);
+  return target[0]?.role === "admin" && (totals[0]?.total ?? 0) <= 1;
+}
+
+async function writeUserAudit(
+  actorId: string,
+  action: string,
+  userId: string,
+  metadata?: Record<string, unknown>,
+) {
+  await db.insert(auditLog).values({
+    id: crypto.randomUUID(),
+    actorId,
+    action,
+    entityType: "user",
+    entityId: userId,
+    metadata: metadata ? JSON.stringify(metadata) : null,
+  });
+}
+
 export async function createAdminUser(
   _prevState: AdminUserActionState,
   formData: FormData,
@@ -280,8 +384,8 @@ export async function createAdminUser(
   }
 
   try {
-    await requireAdmin();
-    await auth.api.createUser({
+    const admin = await requireAdmin();
+    const created = await auth.api.createUser({
       body: {
         name,
         email,
@@ -289,6 +393,10 @@ export async function createAdminUser(
         password: password || undefined,
       },
       headers: await headers(),
+    });
+    await writeUserAudit(admin.user.id, "user.created", created.user.id, {
+      role,
+      email,
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to create user.") };
@@ -308,9 +416,13 @@ export async function setAdminUserRole(
   try {
     const session = await requireAdmin();
 
-    if (userId === session.user.id) {
-      return { error: "You cannot change your own role from this page." };
-    }
+    const policyError = platformAdminMutationError({
+      isSelf: userId === session.user.id,
+      isFinalAdmin:
+        role !== "admin" ? await isFinalPlatformAdmin(userId) : false,
+      operation: "demote",
+    });
+    if (policyError) return { error: policyError };
 
     await auth.api.setRole({
       body: {
@@ -318,6 +430,9 @@ export async function setAdminUserRole(
         role,
       },
       headers: await headers(),
+    });
+    await writeUserAudit(session.user.id, "user.role_updated", userId, {
+      role,
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to update role.") };
@@ -341,9 +456,12 @@ export async function banAdminUser(
   try {
     const session = await requireAdmin();
 
-    if (userId === session.user.id) {
-      return { error: "You cannot ban yourself." };
-    }
+    const policyError = platformAdminMutationError({
+      isSelf: userId === session.user.id,
+      isFinalAdmin: await isFinalPlatformAdmin(userId),
+      operation: "ban",
+    });
+    if (policyError) return { error: policyError };
 
     await auth.api.banUser({
       body: {
@@ -355,6 +473,10 @@ export async function banAdminUser(
             : undefined,
       },
       headers: await headers(),
+    });
+    await writeUserAudit(session.user.id, "user.banned", userId, {
+      banReason: banReason || null,
+      banExpiresIn: banExpiresIn ?? null,
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to ban user.") };
@@ -371,11 +493,12 @@ export async function unbanAdminUser(
   const userId = readString(formData, "userId");
 
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     await auth.api.unbanUser({
       body: { userId },
       headers: await headers(),
     });
+    await writeUserAudit(session.user.id, "user.unbanned", userId);
   } catch (error) {
     return { error: errorMessage(error, "Failed to unban user.") };
   }
@@ -393,10 +516,14 @@ export async function removeAdminUser(
   try {
     const session = await requireAdmin();
 
-    if (userId === session.user.id) {
-      return { error: "You cannot delete yourself." };
-    }
+    const policyError = platformAdminMutationError({
+      isSelf: userId === session.user.id,
+      isFinalAdmin: await isFinalPlatformAdmin(userId),
+      operation: "delete",
+    });
+    if (policyError) return { error: policyError };
 
+    await writeUserAudit(session.user.id, "user.deleted", userId);
     await auth.api.removeUser({
       body: { userId },
       headers: await headers(),
@@ -418,9 +545,12 @@ export async function impersonateAdminUser(
   try {
     const session = await requireAdmin();
 
-    if (userId === session.user.id) {
-      return { error: "You cannot impersonate yourself." };
-    }
+    const policyError = platformAdminMutationError({
+      isSelf: userId === session.user.id,
+      isFinalAdmin: false,
+      operation: "impersonate",
+    });
+    if (policyError) return { error: policyError };
 
     await auth.api.impersonateUser({
       body: { userId },
