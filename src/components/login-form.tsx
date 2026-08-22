@@ -31,13 +31,13 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col", className)} {...props}>
-      <Card className="shadow-none">
-        <CardHeader className="space-y-2 text-center">
-          <CardTitle className="text-lg font-medium tracking-tight">
-            Welcome back
+      <Card className="border-0 bg-muted/35 shadow-none ring-1 ring-foreground/10">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-lg font-semibold tracking-tight">
+            Sign in to Learnspace
           </CardTitle>
           <CardDescription className="text-sm">
-            Sign in to your account to continue.
+            Enter your details below to continue.
           </CardDescription>
         </CardHeader>
 
@@ -50,10 +50,10 @@ export function LoginForm({
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   autoComplete="username"
                   spellCheck={false}
-                  className="h-9"
+                  className="h-10 bg-background"
                   required
                 />
               </div>
@@ -73,7 +73,7 @@ export function LoginForm({
                   name="password"
                   type="password"
                   autoComplete="current-password"
-                  className="h-9"
+                  className="h-10 bg-background"
                   required
                 />
               </div>
@@ -91,8 +91,8 @@ export function LoginForm({
               </Alert>
             )}
 
-            <Button type="submit" disabled={pending} className="h-9 w-full">
-              {pending ? "Signing in…" : "Sign in"}
+            <Button type="submit" disabled={pending} className="h-10 w-full">
+              {pending ? "Signing in…" : "Continue learning"}
             </Button>
           </form>
 
@@ -103,7 +103,7 @@ export function LoginForm({
                 href="/signup"
                 className="font-medium text-foreground underline-offset-4 hover:underline"
               >
-                Sign up
+                Create one
               </Link>
             </p>
           </div>

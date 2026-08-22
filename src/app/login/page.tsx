@@ -1,8 +1,15 @@
-import { GalleryVerticalEnd } from "lucide-react";
+import { GraduationCapIcon } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/login-form";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getSessionOrNull } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: "Sign in — Learnspace",
+  description: "Continue your courses and pick up where you left off.",
+};
 
 export default async function LoginPage() {
   const session = await getSessionOrNull();
@@ -12,16 +19,42 @@ export default async function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-10">
-      <div className="w-full max-w-sm">
-        <Link href="/" className="mb-8 flex items-center justify-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background">
-            <GalleryVerticalEnd className="size-4" aria-hidden="true" />
-          </div>
-          <span className="text-base font-semibold tracking-tight">Nimfi</span>
+    <main className="relative flex min-h-svh flex-col overflow-hidden bg-background px-5 py-5 sm:px-8 sm:py-7">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(ellipse_70%_50%_at_50%_-15%,color-mix(in_oklch,var(--primary)_13%,transparent),transparent)]"
+        aria-hidden="true"
+      />
+
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 font-semibold tracking-tight"
+        >
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+            <GraduationCapIcon className="size-4.5" aria-hidden="true" />
+          </span>
+          Learnspace
         </Link>
-        <LoginForm />
+        <ThemeToggle />
       </div>
-    </div>
+
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12 sm:py-16">
+        <div className="mb-8 text-center">
+          <p className="text-sm font-medium text-muted-foreground">
+            Welcome back
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+            Continue your learning.
+          </h1>
+          <p className="mx-auto mt-3 max-w-sm leading-7 text-muted-foreground">
+            Sign in to access your courses, progress, and learning community.
+          </p>
+        </div>
+        <LoginForm />
+        <p className="mt-8 text-center text-xs text-muted-foreground">
+          Learn continuously. Grow confidently.
+        </p>
+      </div>
+    </main>
   );
 }
