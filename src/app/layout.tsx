@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
 });
@@ -40,11 +40,9 @@ export default function RootLayout({
       lang="en"
       data-scroll-behavior="smooth"
       className={cn(
-        "h-full",
-        "antialiased",
-        geistSans.variable,
+        "h-full font-sans antialiased",
+        inter.variable,
         geistMono.variable,
-        "font-sans",
       )}
       suppressHydrationWarning
     >
