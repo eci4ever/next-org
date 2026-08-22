@@ -10,7 +10,7 @@ import { getEmailBrandName, sendEmail } from "@/lib/email/email.service";
 import { env } from "@/lib/env";
 
 export const auth = betterAuth({
-  appName: "Nimfi",
+  appName: "Learnspace",
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,

@@ -1,4 +1,4 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
@@ -31,7 +31,7 @@ export default async function ProtectedLayout({
     .where(
       and(
         eq(member.userId, session.user.id),
-        ne(organization.status, "archived"),
+        eq(organization.status, "active"),
       ),
     );
 

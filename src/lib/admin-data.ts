@@ -12,14 +12,11 @@ import {
   teamMember,
   user,
 } from "@/db/schema";
-import { requireAdmin } from "@/lib/session";
+import { asOrganizationStatus, type OrganizationStatus } from "@/lib/domain";
+import { requirePlatformCapability } from "@/lib/session";
 
-export const organizationStatuses = [
-  "active",
-  "suspended",
-  "archived",
-] as const;
-export type OrganizationStatus = (typeof organizationStatuses)[number];
+export type { OrganizationStatus } from "@/lib/domain";
+export { organizationStatuses } from "@/lib/domain";
 
 export type AdminOrganizationRow = {
   id: string;
@@ -49,12 +46,6 @@ function serializeDate(value: Date | null) {
   return value?.toISOString() ?? null;
 }
 
-function asOrganizationStatus(value: string): OrganizationStatus {
-  return organizationStatuses.includes(value as OrganizationStatus)
-    ? (value as OrganizationStatus)
-    : "active";
-}
-
 export async function getAdminOrganizations({
   query = "",
   status = "all",
@@ -66,7 +57,7 @@ export async function getAdminOrganizations({
   page?: number;
   pageSize?: number;
 } = {}) {
-  await requireAdmin();
+  await requirePlatformCapability("platform.organizations.read");
 
   const normalizedQuery = query.trim();
   const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
@@ -139,7 +130,7 @@ export async function getAdminUsers({
   page?: number;
   pageSize?: number;
 } = {}) {
-  await requireAdmin();
+  await requirePlatformCapability("platform.users.read");
   const normalizedQuery = query.trim();
   const safePage = Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
   const safePageSize = Math.min(100, Math.max(10, pageSize));
@@ -197,7 +188,7 @@ export async function getAdminUsers({
 }
 
 export async function getAdminOrganization(organizationId: string) {
-  await requireAdmin();
+  await requirePlatformCapability("platform.organizations.read");
 
   const [organizationRows, members, teams, teamMembers, invitations, activity] =
     await Promise.all([
@@ -310,7 +301,7 @@ export async function getAdminOrganization(organizationId: string) {
 }
 
 export async function getAdminUser(userId: string) {
-  await requireAdmin();
+  await requirePlatformCapability("platform.users.read");
 
   const [users, memberships, sessions, activity] = await Promise.all([
     db

@@ -12,7 +12,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { getAdminUsers } from "@/lib/admin-data";
-import { requireAdmin } from "@/lib/session";
+import { requirePlatformCapability } from "@/lib/session";
 
 const AdminUsersTable = dynamic(
   () =>
@@ -36,7 +36,7 @@ export default async function AdminUsersPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const session = await requireAdmin();
+  const session = await requirePlatformCapability("platform.users.read");
   const query = typeof params.query === "string" ? params.query : "";
   const role =
     params.role === "admin" || params.role === "user" ? params.role : "all";

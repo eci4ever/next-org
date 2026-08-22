@@ -892,6 +892,7 @@ const UserActions = React.memo(function UserActions({
         title="Impersonate user?"
         description={`You will start a temporary session as ${user.email}.`}
         submitLabel="Impersonate"
+        requireReason
       />
       <ConfirmUserActionDialog
         user={user}
@@ -1151,6 +1152,7 @@ function ConfirmUserActionDialog({
   description,
   submitLabel,
   destructive = false,
+  requireReason = false,
 }: {
   user: AdminUserRow;
   open: boolean;
@@ -1163,14 +1165,17 @@ function ConfirmUserActionDialog({
   description: string;
   submitLabel: string;
   destructive?: boolean;
+  requireReason?: boolean;
 }) {
   const [pending, setPending] = useState(false);
+  const [reason, setReason] = useState("");
   const router = useRouter();
 
   async function handleConfirm() {
     setPending(true);
     const formData = new FormData();
     formData.set("userId", user.id);
+    if (requireReason) formData.set("reason", reason);
     const result = await action(undefined, formData);
     if (result?.error) toast.error(result.error);
     if (result?.success) {
@@ -1188,11 +1193,24 @@ function ConfirmUserActionDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {requireReason && (
+          <div className="grid gap-2">
+            <FieldLabel htmlFor={`reason-${user.id}`}>Reason</FieldLabel>
+            <Textarea
+              id={`reason-${user.id}`}
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              placeholder="Explain why impersonation is required"
+              maxLength={500}
+              required
+            />
+          </div>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             type="button"
-            disabled={pending}
+            disabled={pending || (requireReason && !reason.trim())}
             variant={destructive ? "destructive" : "default"}
             onClick={handleConfirm}
           >

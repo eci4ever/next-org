@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import {
   auditLog,
+  invitation,
   member,
   organization,
   session as sessionTable,
@@ -14,6 +15,11 @@ import {
 } from "@/db/schema";
 import { platformAdminMutationError } from "@/lib/admin-policy";
 import { auth, getSession } from "@/lib/auth";
+import {
+  type PlatformCapability,
+  platformRoleAllows,
+} from "@/lib/authorization";
+import { asPlatformRole } from "@/lib/domain";
 
 export type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 
@@ -43,15 +49,13 @@ export async function requireSession(): Promise<Session> {
   return session;
 }
 
-/**
- * Get the current session and verify the user is an admin.
- * Redirects to /dashboard if not an admin.
- * Use this in admin-only server actions and pages.
- */
-export async function requireAdmin(): Promise<Session> {
+/** Authenticate the request and require one named platform capability. */
+export async function requirePlatformCapability(
+  capability: PlatformCapability,
+): Promise<Session> {
   const session = await requireSession();
 
-  if (session.user.role !== "admin") {
+  if (!platformRoleAllows(asPlatformRole(session.user.role), capability)) {
     redirect("/dashboard");
   }
 
@@ -63,7 +67,12 @@ export async function requireAdmin(): Promise<Session> {
  */
 export async function isAdmin(): Promise<boolean> {
   const session = await getSession();
-  return session?.user.role === "admin";
+  return session
+    ? platformRoleAllows(
+        asPlatformRole(session.user.role),
+        "platform.dashboard.read",
+      )
+    : false;
 }
 
 export async function switchActiveOrganization(organizationId: string) {
@@ -76,7 +85,7 @@ export async function switchActiveOrganization(organizationId: string) {
       and(
         eq(member.userId, current.user.id),
         eq(member.organizationId, organizationId),
-        ne(organization.status, "archived"),
+        eq(organization.status, "active"),
       ),
     )
     .limit(1);
@@ -104,6 +113,17 @@ export async function acceptOrganizationInvitation(formData: FormData) {
   await requireSession();
   const invitationId = readString(formData, "invitationId");
   if (!invitationId) return { error: "Invitation is required." };
+
+  const target = await db
+    .select({ status: organization.status })
+    .from(invitation)
+    .innerJoin(organization, eq(organization.id, invitation.organizationId))
+    .where(eq(invitation.id, invitationId))
+    .limit(1);
+  if (!target[0]) return { error: "Invitation not found." };
+  if (target[0].status !== "active") {
+    return { error: "This organization is not accepting invitations." };
+  }
 
   try {
     await auth.api.acceptInvitation({
@@ -384,7 +404,7 @@ export async function createAdminUser(
   }
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requirePlatformCapability("platform.users.manage");
     const created = await auth.api.createUser({
       body: {
         name,
@@ -396,7 +416,6 @@ export async function createAdminUser(
     });
     await writeUserAudit(admin.user.id, "user.created", created.user.id, {
       role,
-      email,
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to create user.") };
@@ -414,7 +433,7 @@ export async function setAdminUserRole(
   const role = readRole(formData);
 
   try {
-    const session = await requireAdmin();
+    const session = await requirePlatformCapability("platform.users.manage");
 
     const policyError = platformAdminMutationError({
       isSelf: userId === session.user.id,
@@ -454,7 +473,7 @@ export async function banAdminUser(
     : undefined;
 
   try {
-    const session = await requireAdmin();
+    const session = await requirePlatformCapability("platform.users.manage");
 
     const policyError = platformAdminMutationError({
       isSelf: userId === session.user.id,
@@ -493,7 +512,7 @@ export async function unbanAdminUser(
   const userId = readString(formData, "userId");
 
   try {
-    const session = await requireAdmin();
+    const session = await requirePlatformCapability("platform.users.manage");
     await auth.api.unbanUser({
       body: { userId },
       headers: await headers(),
@@ -514,7 +533,7 @@ export async function removeAdminUser(
   const userId = readString(formData, "userId");
 
   try {
-    const session = await requireAdmin();
+    const session = await requirePlatformCapability("platform.users.manage");
 
     const policyError = platformAdminMutationError({
       isSelf: userId === session.user.id,
@@ -541,9 +560,14 @@ export async function impersonateAdminUser(
   formData: FormData,
 ): Promise<AdminUserActionState> {
   const userId = readString(formData, "userId");
+  const reason = readString(formData, "reason");
+  if (!reason) return { error: "A reason is required for impersonation." };
+  if (reason.length > 500) return { error: "Reason is too long." };
 
   try {
-    const session = await requireAdmin();
+    const session = await requirePlatformCapability(
+      "platform.users.impersonate",
+    );
 
     const policyError = platformAdminMutationError({
       isSelf: userId === session.user.id,
@@ -555,6 +579,9 @@ export async function impersonateAdminUser(
     await auth.api.impersonateUser({
       body: { userId },
       headers: await headers(),
+    });
+    await writeUserAudit(session.user.id, "user.impersonated", userId, {
+      reason,
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to impersonate user.") };

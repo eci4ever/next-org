@@ -1,3 +1,5 @@
+import type { OrganizationRole } from "@/lib/domain";
+
 export function platformAdminMutationError({
   isSelf,
   isFinalAdmin,
@@ -32,8 +34,8 @@ export function finalOwnerMutationError({
   otherOwnerCount,
   operation,
 }: {
-  currentRole: string;
-  nextRole?: string;
+  currentRole: OrganizationRole;
+  nextRole?: OrganizationRole;
   otherOwnerCount: number;
   operation: "change-role" | "remove";
 }) {

@@ -15,21 +15,28 @@ import {
   teamMember,
   user,
 } from "@/db/schema";
-import {
-  type OrganizationStatus,
-  writeAdminAuditEvent,
-} from "@/lib/admin-data";
+import { writeAdminAuditEvent } from "@/lib/admin-data";
 import { finalOwnerMutationError } from "@/lib/admin-policy";
 import { auth } from "@/lib/auth";
+import { organizationCanReceiveActivity } from "@/lib/authorization";
+import {
+  asOrganizationRole,
+  asOrganizationStatus,
+  organizationRoles,
+  organizationStatuses,
+} from "@/lib/domain";
 import {
   buildAuthUrl,
   makeEmailTemplate,
   sendEmail,
 } from "@/lib/email/email.service";
 import { env } from "@/lib/env";
-import { requireAdmin } from "@/lib/session";
+import { requirePlatformCapability } from "@/lib/session";
 
 export type AdminActionState = { error?: string; success?: string } | undefined;
+
+const requireOrganizationManager = () =>
+  requirePlatformCapability("platform.organizations.manage");
 
 const organizationSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters."),
@@ -45,7 +52,8 @@ const organizationSchema = z.object({
   logo: z.string().trim().url("Logo must be a valid URL.").or(z.literal("")),
 });
 
-const memberRoleSchema = z.enum(["member", "admin", "owner"]);
+const memberRoleSchema = z.enum(organizationRoles);
+const organizationStatusSchema = z.enum(organizationStatuses);
 
 function value(formData: FormData, key: string) {
   const input = formData.get(key);
@@ -58,6 +66,22 @@ function actionError(error: unknown, fallback: string) {
 
 function organizationPath(organizationId: string) {
   return `/admin/organizations/${organizationId}`;
+}
+
+async function organizationActivityError(organizationId: string) {
+  const rows = await db
+    .select({ status: organization.status })
+    .from(organization)
+    .where(eq(organization.id, organizationId))
+    .limit(1);
+  const status = rows[0]?.status;
+  if (!status) return "Organization not found.";
+  if (!organizationCanReceiveActivity(asOrganizationStatus(status))) {
+    return status === "suspended"
+      ? "The organization is suspended."
+      : "The organization is archived.";
+  }
+  return null;
 }
 
 function revalidateOrganization(organizationId?: string) {
@@ -82,7 +106,7 @@ export async function createAdminOrganization(
   }
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
     const created = await auth.api.createOrganization({
       body: {
         name: parsed.data.name,
@@ -127,7 +151,7 @@ export async function updateAdminOrganization(
   }
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
     const updated = await db
       .update(organization)
       .set({
@@ -159,27 +183,24 @@ export async function setAdminOrganizationStatus(
   formData: FormData,
 ): Promise<AdminActionState> {
   const organizationId = value(formData, "organizationId");
-  const status = value(formData, "status") as OrganizationStatus;
+  const status = organizationStatusSchema.safeParse(value(formData, "status"));
   const reason = value(formData, "reason");
-  if (
-    !organizationId ||
-    !["active", "suspended", "archived"].includes(status)
-  ) {
+  if (!organizationId || !status.success) {
     return { error: "Invalid organization status." };
   }
-  if (status !== "active" && !reason) {
+  if (status.data !== "active" && !reason) {
     return { error: "A reason is required." };
   }
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
     const updated = await db
       .update(organization)
       .set({
-        status,
-        statusReason: status === "active" ? null : reason,
-        suspendedAt: status === "suspended" ? new Date() : null,
-        archivedAt: status === "archived" ? new Date() : null,
+        status: status.data,
+        statusReason: status.data === "active" ? null : reason,
+        suspendedAt: status.data === "suspended" ? new Date() : null,
+        archivedAt: status.data === "archived" ? new Date() : null,
         updatedAt: new Date(),
       })
       .where(eq(organization.id, organizationId))
@@ -187,7 +208,7 @@ export async function setAdminOrganizationStatus(
     if (!updated.length) return { error: "Organization not found." };
     await writeAdminAuditEvent({
       actorId: admin.user.id,
-      action: `organization.${status}`,
+      action: `organization.${status.data}`,
       entityType: "organization",
       entityId: organizationId,
       metadata: reason ? { reason } : undefined,
@@ -195,9 +216,9 @@ export async function setAdminOrganizationStatus(
     revalidateOrganization(organizationId);
     return {
       success:
-        status === "active"
+        status.data === "active"
           ? "Organization reactivated."
-          : `Organization ${status}.`,
+          : `Organization ${status.data}.`,
     };
   } catch (error) {
     return {
@@ -214,7 +235,7 @@ export async function deleteAdminOrganization(
   const confirmation = value(formData, "confirmation");
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
     const rows = await db
       .select({ slug: organization.slug, status: organization.status })
       .from(organization)
@@ -260,7 +281,9 @@ export async function addAdminOrganizationMember(
   }
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
+    const activityError = await organizationActivityError(organizationId);
+    if (activityError) return { error: activityError };
     const users = await db
       .select({ id: user.id })
       .from(user)
@@ -321,7 +344,7 @@ export async function updateAdminOrganizationMember(
     return { error: "Invalid membership." };
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
     const current = await db
       .select({ role: member.role, userId: member.userId })
       .from(member)
@@ -331,7 +354,7 @@ export async function updateAdminOrganizationMember(
       .limit(1);
     if (!current[0]) return { error: "Membership not found." };
     const policyError = finalOwnerMutationError({
-      currentRole: current[0].role,
+      currentRole: asOrganizationRole(current[0].role),
       nextRole: role.data,
       otherOwnerCount: await ownerCount(organizationId, memberId),
       operation: "change-role",
@@ -364,7 +387,7 @@ export async function removeAdminOrganizationMember(
   const memberId = value(formData, "memberId");
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
     const current = await db
       .select({ role: member.role, userId: member.userId })
       .from(member)
@@ -374,7 +397,7 @@ export async function removeAdminOrganizationMember(
       .limit(1);
     if (!current[0]) return { error: "Membership not found." };
     const policyError = finalOwnerMutationError({
-      currentRole: current[0].role,
+      currentRole: asOrganizationRole(current[0].role),
       otherOwnerCount: await ownerCount(organizationId, memberId),
       operation: "remove",
     });
@@ -405,7 +428,9 @@ export async function createAdminOrganizationTeam(
     return { error: "Team name is required." };
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
+    const activityError = await organizationActivityError(organizationId);
+    if (activityError) return { error: activityError };
     const teamId = crypto.randomUUID();
     await db
       .insert(team)
@@ -431,7 +456,7 @@ export async function deleteAdminOrganizationTeam(
   const organizationId = value(formData, "organizationId");
   const teamId = value(formData, "teamId");
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
     await db
       .delete(team)
       .where(and(eq(team.id, teamId), eq(team.organizationId, organizationId)));
@@ -464,7 +489,9 @@ export async function addAdminTeamMember(
   }
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
+    const activityError = await organizationActivityError(organizationId);
+    if (activityError) return { error: activityError };
     const memberships = await db
       .select({ userId: member.userId })
       .from(member)
@@ -520,7 +547,7 @@ export async function removeAdminTeamMember(
   }
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
     const rows = await db
       .select({
         id: teamMember.id,
@@ -560,7 +587,7 @@ export async function cancelAdminOrganizationInvitation(
   const organizationId = value(formData, "organizationId");
   const invitationId = value(formData, "invitationId");
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
     await db
       .update(invitation)
       .set({ status: "canceled" })
@@ -599,7 +626,9 @@ export async function inviteAdminOrganizationMember(
   }
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireOrganizationManager();
+    const activityError = await organizationActivityError(organizationId);
+    if (activityError) return { error: activityError };
     const [organizations, existingMembers, pendingInvitations] =
       await Promise.all([
         db
@@ -696,7 +725,7 @@ export async function revokeAdminUserSession(
   if (!userId || !sessionId) return { error: "Invalid session." };
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requirePlatformCapability("platform.users.manage");
     const removed = await db
       .delete(sessionTable)
       .where(
