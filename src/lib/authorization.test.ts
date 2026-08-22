@@ -5,6 +5,7 @@ import {
   organizationRoleAllows,
   platformRoleAllows,
 } from "./authorization";
+import { invitationDisplayStatus } from "./domain";
 
 describe("platform authorization", () => {
   it("grants platform capabilities only to platform administrators", () => {
@@ -61,5 +62,17 @@ describe("organization authorization", () => {
     expect(organizationCanReceiveActivity("active")).toBe(true);
     expect(organizationCanReceiveActivity("suspended")).toBe(false);
     expect(organizationCanReceiveActivity("archived")).toBe(false);
+  });
+});
+
+describe("invitation lifecycle", () => {
+  it("presents an elapsed pending invitation as expired", () => {
+    expect(
+      invitationDisplayStatus({
+        status: "pending",
+        expiresAt: new Date("2026-01-01T00:00:00Z"),
+        now: new Date("2026-01-02T00:00:00Z"),
+      }),
+    ).toBe("expired");
   });
 });

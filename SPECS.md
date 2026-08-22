@@ -127,6 +127,12 @@ As behavior grows, split platform administration by capability under `src/module
 
 ## 10. Delivery phases
 
+Implementation status as of the current repository state:
+
+- Phase 1 authorization foundation: complete.
+- Phase 2 audit context, impersonation reason, session tenant invalidation, and invitation expiry normalization: complete.
+- Phase 2 recent re-authentication challenge: pending a dedicated credential/MFA confirmation flow.
+
 ### Phase 1 — authorization foundation
 
 - Typed platform roles, organization roles, statuses, and capabilities

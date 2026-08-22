@@ -15,8 +15,8 @@ import {
   teamMember,
   user,
 } from "@/db/schema";
-import { writeAdminAuditEvent } from "@/lib/admin-data";
 import { finalOwnerMutationError } from "@/lib/admin-policy";
+import { writeAuditEvent } from "@/lib/audit";
 import { auth } from "@/lib/auth";
 import { organizationCanReceiveActivity } from "@/lib/authorization";
 import {
@@ -37,6 +37,17 @@ export type AdminActionState = { error?: string; success?: string } | undefined;
 
 const requireOrganizationManager = () =>
   requirePlatformCapability("platform.organizations.manage");
+
+async function writeAdminAuditEvent(
+  event: Parameters<typeof writeAuditEvent>[0],
+) {
+  await writeAuditEvent({
+    ...event,
+    organizationId:
+      event.organizationId ??
+      (event.entityType === "organization" ? event.entityId : undefined),
+  });
+}
 
 const organizationSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters."),
@@ -206,12 +217,19 @@ export async function setAdminOrganizationStatus(
       .where(eq(organization.id, organizationId))
       .returning({ id: organization.id });
     if (!updated.length) return { error: "Organization not found." };
+    if (status.data !== "active") {
+      await db
+        .update(sessionTable)
+        .set({ activeOrganizationId: null, activeTeamId: null })
+        .where(eq(sessionTable.activeOrganizationId, organizationId));
+    }
     await writeAdminAuditEvent({
       actorId: admin.user.id,
       action: `organization.${status.data}`,
       entityType: "organization",
       entityId: organizationId,
-      metadata: reason ? { reason } : undefined,
+      reason: reason || undefined,
+      severity: status.data === "active" ? "info" : "warning",
     });
     revalidateOrganization(organizationId);
     return {
@@ -255,6 +273,7 @@ export async function deleteAdminOrganization(
       action: "organization.deleted",
       entityType: "organization",
       entityId: organizationId,
+      severity: "critical",
       metadata: { slug: target.slug },
     });
     await db.delete(organization).where(eq(organization.id, organizationId));
@@ -588,15 +607,20 @@ export async function cancelAdminOrganizationInvitation(
   const invitationId = value(formData, "invitationId");
   try {
     const admin = await requireOrganizationManager();
-    await db
+    const canceled = await db
       .update(invitation)
       .set({ status: "canceled" })
       .where(
         and(
           eq(invitation.id, invitationId),
           eq(invitation.organizationId, organizationId),
+          eq(invitation.status, "pending"),
         ),
-      );
+      )
+      .returning({ id: invitation.id });
+    if (!canceled.length) {
+      return { error: "Pending invitation not found." };
+    }
     await writeAdminAuditEvent({
       actorId: admin.user.id,
       action: "invitation.canceled",

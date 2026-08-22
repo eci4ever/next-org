@@ -12,7 +12,11 @@ import {
   teamMember,
   user,
 } from "@/db/schema";
-import { asOrganizationStatus, type OrganizationStatus } from "@/lib/domain";
+import {
+  asOrganizationStatus,
+  invitationDisplayStatus,
+  type OrganizationStatus,
+} from "@/lib/domain";
 import { requirePlatformCapability } from "@/lib/session";
 
 export type { OrganizationStatus } from "@/lib/domain";
@@ -250,6 +254,10 @@ export async function getAdminOrganization(organizationId: string) {
           id: auditLog.id,
           action: auditLog.action,
           metadata: auditLog.metadata,
+          organizationId: auditLog.organizationId,
+          requestId: auditLog.requestId,
+          reason: auditLog.reason,
+          severity: auditLog.severity,
           createdAt: auditLog.createdAt,
           actorName: user.name,
           actorEmail: user.email,
@@ -290,6 +298,10 @@ export async function getAdminOrganization(organizationId: string) {
     teamMembers,
     invitations: invitations.map((item) => ({
       ...item,
+      status: invitationDisplayStatus({
+        status: item.status,
+        expiresAt: item.expiresAt,
+      }),
       expiresAt: item.expiresAt.toISOString(),
       createdAt: item.createdAt.toISOString(),
     })),
@@ -353,6 +365,10 @@ export async function getAdminUser(userId: string) {
         id: auditLog.id,
         action: auditLog.action,
         metadata: auditLog.metadata,
+        organizationId: auditLog.organizationId,
+        requestId: auditLog.requestId,
+        reason: auditLog.reason,
+        severity: auditLog.severity,
         createdAt: auditLog.createdAt,
         actorName: user.name,
       })
@@ -391,27 +407,4 @@ export async function getAdminUser(userId: string) {
       createdAt: item.createdAt.toISOString(),
     })),
   };
-}
-
-export async function writeAdminAuditEvent({
-  actorId,
-  action,
-  entityType,
-  entityId,
-  metadata,
-}: {
-  actorId: string;
-  action: string;
-  entityType: "organization" | "user" | "membership" | "invitation";
-  entityId: string;
-  metadata?: Record<string, unknown>;
-}) {
-  await db.insert(auditLog).values({
-    id: crypto.randomUUID(),
-    actorId,
-    action,
-    entityType,
-    entityId,
-    metadata: metadata ? JSON.stringify(metadata) : null,
-  });
 }

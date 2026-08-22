@@ -221,12 +221,22 @@ export const auditLog = pgTable(
     action: text("action").notNull(),
     entityType: text("entity_type").notNull(),
     entityId: text("entity_id").notNull(),
+    organizationId: text("organization_id").references(() => organization.id, {
+      onDelete: "set null",
+    }),
+    requestId: text("request_id"),
+    reason: text("reason"),
+    severity: text("severity").default("info").notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
     metadata: text("metadata"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
     index("platformAuditLog_actorId_idx").on(table.actorId),
     index("platformAuditLog_entity_idx").on(table.entityType, table.entityId),
+    index("platformAuditLog_organizationId_idx").on(table.organizationId),
+    index("platformAuditLog_requestId_idx").on(table.requestId),
     index("platformAuditLog_createdAt_idx").on(table.createdAt),
   ],
 );

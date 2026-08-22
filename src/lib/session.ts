@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import {
-  auditLog,
   invitation,
   member,
   organization,
@@ -14,6 +13,7 @@ import {
   user,
 } from "@/db/schema";
 import { platformAdminMutationError } from "@/lib/admin-policy";
+import { writeAuditEvent } from "@/lib/audit";
 import { auth, getSession } from "@/lib/auth";
 import {
   type PlatformCapability,
@@ -378,15 +378,18 @@ async function writeUserAudit(
   actorId: string,
   action: string,
   userId: string,
-  metadata?: Record<string, unknown>,
+  options?: {
+    metadata?: Record<string, unknown>;
+    reason?: string;
+    severity?: "info" | "warning" | "critical";
+  },
 ) {
-  await db.insert(auditLog).values({
-    id: crypto.randomUUID(),
+  await writeAuditEvent({
     actorId,
     action,
     entityType: "user",
     entityId: userId,
-    metadata: metadata ? JSON.stringify(metadata) : null,
+    ...options,
   });
 }
 
@@ -415,7 +418,7 @@ export async function createAdminUser(
       headers: await headers(),
     });
     await writeUserAudit(admin.user.id, "user.created", created.user.id, {
-      role,
+      metadata: { role },
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to create user.") };
@@ -451,7 +454,7 @@ export async function setAdminUserRole(
       headers: await headers(),
     });
     await writeUserAudit(session.user.id, "user.role_updated", userId, {
-      role,
+      metadata: { role },
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to update role.") };
@@ -494,8 +497,9 @@ export async function banAdminUser(
       headers: await headers(),
     });
     await writeUserAudit(session.user.id, "user.banned", userId, {
-      banReason: banReason || null,
-      banExpiresIn: banExpiresIn ?? null,
+      reason: banReason || undefined,
+      severity: "warning",
+      metadata: { banExpiresIn: banExpiresIn ?? null },
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to ban user.") };
@@ -542,10 +546,12 @@ export async function removeAdminUser(
     });
     if (policyError) return { error: policyError };
 
-    await writeUserAudit(session.user.id, "user.deleted", userId);
     await auth.api.removeUser({
       body: { userId },
       headers: await headers(),
+    });
+    await writeUserAudit(session.user.id, "user.deleted", userId, {
+      severity: "critical",
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to delete user.") };
@@ -582,6 +588,7 @@ export async function impersonateAdminUser(
     });
     await writeUserAudit(session.user.id, "user.impersonated", userId, {
       reason,
+      severity: "warning",
     });
   } catch (error) {
     return { error: errorMessage(error, "Failed to impersonate user.") };
