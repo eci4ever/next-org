@@ -26,8 +26,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "System Status",
-  description: "Live server and database health monitoring.",
+  title: "Learnspace — Learn without limits",
+  description:
+    "Practical online courses, expert instructors, and a learning community built to help you grow.",
 };
 
 export default function RootLayout({
