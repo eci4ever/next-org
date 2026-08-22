@@ -3,12 +3,6 @@
 import { MonitorIcon, SmartphoneIcon, TabletIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -104,11 +98,12 @@ export function SessionManager() {
       setSessions(result.sessions);
     } catch (cause) {
       setSessions([]);
-      setError(
+      const message =
         cause instanceof Error
           ? cause.message
-          : "Unable to load your active sessions.",
-      );
+          : "Unable to load your active sessions.";
+      setError(message);
+      toast.error("Could not load sessions", { description: message });
     } finally {
       setLoading(false);
     }
@@ -163,15 +158,9 @@ export function SessionManager() {
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading sessions…</p>
         ) : error ? (
-          <Alert variant="destructive">
-            <AlertTitle>Could not load sessions</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-            <AlertAction>
-              <Button variant="outline" size="sm" onClick={fetchSessions}>
-                Try Again
-              </Button>
-            </AlertAction>
-          </Alert>
+          <Button variant="outline" size="sm" onClick={fetchSessions}>
+            Retry loading sessions
+          </Button>
         ) : sessions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No active sessions found.

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,11 +21,10 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [state, formAction, pending] = useActionState(signUp, undefined);
-  const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (state?.error) {
-      errorRef.current?.focus();
+      toast.error("Unable to create account", { description: state.error });
     }
   }, [state]);
 
@@ -100,18 +99,6 @@ export function SignupForm({
                 Must be at least 8 characters long.
               </p>
             </div>
-
-            {state?.error && (
-              <Alert variant="destructive">
-                <AlertDescription
-                  ref={errorRef}
-                  aria-live="polite"
-                  tabIndex={-1}
-                >
-                  {state.error}
-                </AlertDescription>
-              </Alert>
-            )}
 
             <Button type="submit" disabled={pending} className="h-10 w-full">
               {pending ? "Creating account…" : "Start learning free"}

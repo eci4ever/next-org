@@ -1,17 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
-import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
 export function ResendVerification({ email }: { email: string }) {
-  const [loading, setLoading] = useState(false);
-
-  const handleResend = async () => {
-    setLoading(true);
-
+  const handleResend = useCallback(async () => {
     const { error } = await authClient.sendVerificationEmail({
       email,
       callbackURL: "/dashboard",
@@ -22,25 +16,23 @@ export function ResendVerification({ email }: { email: string }) {
     } else {
       toast.success("Verification email sent. Check your inbox.");
     }
-    setLoading(false);
-  };
+  }, [email]);
 
-  return (
-    <Alert variant="destructive">
-      <AlertDescription>
-        Your email is not yet verified. Verify your email to enable all
-        features.
-      </AlertDescription>
-      <AlertAction>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleResend}
-          disabled={loading}
-        >
-          {loading ? "Sending…" : "Resend Email"}
-        </Button>
-      </AlertAction>
-    </Alert>
-  );
+  useEffect(() => {
+    toast.warning("Email not verified", {
+      id: `email-verification-${email}`,
+      description: "Verify your email to enable all features.",
+      duration: Number.POSITIVE_INFINITY,
+      action: {
+        label: "Resend email",
+        onClick: handleResend,
+      },
+    });
+
+    return () => {
+      toast.dismiss(`email-verification-${email}`);
+    };
+  }, [email, handleResend]);
+
+  return null;
 }

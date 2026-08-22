@@ -20,12 +20,10 @@ import { authClient } from "@/lib/auth-client";
 export default function TwoFactorPage() {
   const router = useRouter();
   const [code, setCode] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
@@ -35,7 +33,6 @@ export default function TwoFactorPage() {
       });
 
       if (err) {
-        setError(err.message ?? "Invalid code");
         toast.error(err.message ?? "Invalid verification code");
         return;
       }
@@ -45,7 +42,6 @@ export default function TwoFactorPage() {
       router.refresh();
     } catch {
       const message = "Could not verify the code. Please try again.";
-      setError(message);
       toast.error(message);
     } finally {
       setLoading(false);
@@ -75,11 +71,6 @@ export default function TwoFactorPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleVerify}>
-              {error ? (
-                <p className="mb-4 text-sm text-destructive" role="alert">
-                  {error}
-                </p>
-              ) : null}
               <FieldGroup>
                 <Field>
                   <FieldLabel htmlFor="code">Verification Code</FieldLabel>

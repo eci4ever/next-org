@@ -4,7 +4,7 @@ import { GalleryVerticalEnd } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,17 +13,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { authClient } from "@/lib/auth-client";
 
 function CheckEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
-  const [resent, setResent] = useState(false);
-  const [resendError, setResendError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleResend = async () => {
     if (!email) return;
-    setResendError("");
     setLoading(true);
 
     const { error } = await authClient.sendVerificationEmail({
@@ -32,9 +30,11 @@ function CheckEmailContent() {
     });
 
     if (error) {
-      setResendError(error.message ?? "Failed to resend.");
+      toast.error(error.message ?? "Failed to resend verification email.");
     } else {
-      setResent(true);
+      toast.success("Verification email sent", {
+        description: "Check your inbox for a new verification link.",
+      });
     }
     setLoading(false);
   };
@@ -50,16 +50,7 @@ function CheckEmailContent() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4 text-center">
-        {resendError ? (
-          <p className="text-sm text-destructive" role="alert">
-            {resendError}
-          </p>
-        ) : null}
-        {resent ? (
-          <p className="text-sm text-muted-foreground">
-            Verification email resent. Check your inbox.
-          </p>
-        ) : email ? (
+        {email ? (
           <Button
             variant="outline"
             onClick={handleResend}
@@ -88,7 +79,10 @@ export default function CheckEmailPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link href="/" className="flex items-center gap-2 self-center font-medium">
+        <Link
+          href="/"
+          className="flex items-center gap-2 self-center font-medium"
+        >
           <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <GalleryVerticalEnd className="size-4" />
           </div>
@@ -98,7 +92,9 @@ export default function CheckEmailPage() {
           fallback={
             <Card>
               <CardHeader className="text-center">
-                <CardTitle className="text-lg font-medium">Check Your Email</CardTitle>
+                <CardTitle className="text-lg font-medium">
+                  Check Your Email
+                </CardTitle>
                 <CardDescription>
                   We sent a verification link to your email address.
                 </CardDescription>
